@@ -137,6 +137,7 @@ void enterPlatformer(void)
     bool player1OnGround = true;
     bool player2OnGround = true;
 
+    int score = 0; // <-- Score system
     Camera2D camera = {0};
     camera.offset = (Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
     camera.zoom = 1.0f;
@@ -163,6 +164,8 @@ void enterPlatformer(void)
             player1Vel = (Vector2){0,0};
             player2Vel = (Vector2){0,0};
             player1OnGround = player2OnGround = true;
+
+            score = 0; // Reset score on respawn
         }
 
         float prevY1 = player1Pos.y;
@@ -204,6 +207,10 @@ void enterPlatformer(void)
                     player1Pos.y = plat.y - PLAYER_HEIGHT;
                     player1Vel.y = 0;
                     player1OnGround = true;
+
+                    // Update score when reaching higher
+                    int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
+                    if (newScore > score) score = newScore;
                 }
             }
 
@@ -221,6 +228,10 @@ void enterPlatformer(void)
                     player2Pos.y = plat.y - PLAYER_HEIGHT;
                     player2Vel.y = 0;
                     player2OnGround = true;
+
+                    // Update score
+                    int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
+                    if (newScore > score) score = newScore;
                 }
             }
         }
@@ -260,7 +271,6 @@ void enterPlatformer(void)
             }
 
             Rectangle bulletRect = { bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 };
-
             Rectangle p1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
             Rectangle p2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
 
@@ -277,11 +287,13 @@ void enterPlatformer(void)
                 player1Vel = (Vector2){0,0};
                 player2Vel = (Vector2){0,0};
                 player1OnGround = player2OnGround = true;
+
+                score = 0; // Reset score
                 break;
             }
         }
 
-        // Camera follows average
+        // Camera follows average of two players
         camera.target.x = (player1Pos.x + player2Pos.x)/2;
         camera.target.y = (player1Pos.y + player2Pos.y)/2;
 
@@ -316,7 +328,10 @@ void enterPlatformer(void)
 
         EndMode2D();
 
-        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop Down | WASD: P1 | Arrow Keys: P2", 20, 20, 20, WHITE);
+        // Draw score
+        DrawText(TextFormat("Score: %i", score), 20, 20, 20, WHITE);
+
+        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop | WASD: P1 | Arrows: P2", 20, 50, 20, WHITE);
 
         EndDrawing();
     }
