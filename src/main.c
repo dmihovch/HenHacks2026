@@ -78,13 +78,6 @@ if (speed > MAX_SPEED) {
 ballPosition.x += ballVelocity.x * dt;
 ballPosition.y += ballVelocity.y * dt;
 
-		/*
-		if (IsKeyDown(KEY_RIGHT)) ballPosition.x += 4.0f;
-        if (IsKeyDown(KEY_LEFT)) ballPosition.x -= 4.0f;
-        if (IsKeyDown(KEY_UP)) ballPosition.y -= 4.0f;
-        if (IsKeyDown(KEY_DOWN)) ballPosition.y += 4.0f;
-		*/
-
 		currentScene = GetKeyPressed();
 
 		if(IsKeyPressed(QUICK_DRAW))
@@ -93,7 +86,7 @@ ballPosition.y += ballVelocity.y * dt;
 		}
 		if(IsKeyPressed(BOTTLES))
 		{
-			enterBottles();
+			enterBottles(width, height);
 		}
 		if(IsKeyPressed(PLATFORMER))
 		{
