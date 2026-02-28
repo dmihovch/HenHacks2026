@@ -39,16 +39,13 @@ typedef struct {
     bool active;
 } Bullet;
 
+// Generate platforms
 void GeneratePlatforms(Platform platforms[])
 {
     float baseX = 400;
     float baseY = 850;
 
-    platforms[0].rect = (Rectangle){
-        baseX, baseY,
-        PLATFORM_WIDTH, PLATFORM_HEIGHT
-    };
-
+    platforms[0].rect = (Rectangle){ baseX, baseY, PLATFORM_WIDTH, PLATFORM_HEIGHT };
     platforms[0].dropZone = (Rectangle){0,0,0,0};
 
     float prevX = baseX;
@@ -64,17 +61,12 @@ void GeneratePlatforms(Platform platforms[])
         int direction = GetRandomValue(0,1) == 0 ? -1 : 1;
         float newX;
 
-        if (direction == 1)
-        {
+        if (direction == 1) {
             newX = prevX + prevWidth - overlap;
-            if (fabs(newX - prevX) < minSeparation)
-                newX = prevX + minSeparation;
-        }
-        else
-        {
+            if (fabs(newX - prevX) < minSeparation) newX = prevX + minSeparation;
+        } else {
             newX = prevX - newWidth + overlap;
-            if (fabs(newX - prevX) < minSeparation)
-                newX = prevX - minSeparation;
+            if (fabs(newX - prevX) < minSeparation) newX = prevX - minSeparation;
         }
 
         if (newX < 100) newX = 100;
@@ -82,17 +74,8 @@ void GeneratePlatforms(Platform platforms[])
 
         float newY = prevY - VERTICAL_SPACING;
 
-        platforms[i].rect = (Rectangle){
-            newX, newY,
-            newWidth, PLATFORM_HEIGHT
-        };
-
-        platforms[i].dropZone = (Rectangle){
-            newX + newWidth * 0.4f,
-            newY,
-            newWidth * 0.2f,
-            PLATFORM_HEIGHT
-        };
+        platforms[i].rect = (Rectangle){ newX, newY, newWidth, PLATFORM_HEIGHT };
+        platforms[i].dropZone = (Rectangle){ newX + newWidth*0.4f, newY, newWidth*0.2f, PLATFORM_HEIGHT };
 
         prevX = newX;
         prevY = newY;
@@ -100,6 +83,7 @@ void GeneratePlatforms(Platform platforms[])
     }
 }
 
+// Generate shooters based on platforms
 void RegenerateShooters(Platform platforms[], Shooter shooters[])
 {
     for (int i = 0; i < PLATFORM_COUNT; i++)
@@ -110,38 +94,25 @@ void RegenerateShooters(Platform platforms[], Shooter shooters[])
         if (i == 0) continue;
 
         float spawnChance = (float)i / PLATFORM_COUNT;
-
-        if (GetRandomValue(0,100) < spawnChance * 100)
+        if (GetRandomValue(0,100) < spawnChance*100)
         {
             shooters[i].active = true;
 
             Rectangle p = platforms[i].rect;
             bool spawnLeft = GetRandomValue(0,1) == 0;
 
-            if (spawnLeft)
-            {
-                shooters[i].rect = (Rectangle){
-                    p.x - 20,
-                    p.y - 40,
-                    20,
-                    40
-                };
+            if (spawnLeft) {
+                shooters[i].rect = (Rectangle){ p.x - 20, p.y - 40, 20, 40 };
                 shooters[i].direction = 1;
-            }
-            else
-            {
-                shooters[i].rect = (Rectangle){
-                    p.x + p.width,
-                    p.y - 40,
-                    20,
-                    40
-                };
+            } else {
+                shooters[i].rect = (Rectangle){ p.x + p.width, p.y - 40, 20, 40 };
                 shooters[i].direction = -1;
             }
         }
     }
 }
 
+// Enter platformer
 void enterPlatformer(void)
 {
     srand(time(NULL));
@@ -156,25 +127,27 @@ void enterPlatformer(void)
     for (int i = 0; i < MAX_BULLETS; i++)
         bullets[i].active = false;
 
-    Vector2 playerPos = {
-        platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2,
-        platforms[0].rect.y - PLAYER_HEIGHT
-    };
+    Vector2 player1Pos = { platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2,
+                            platforms[0].rect.y - PLAYER_HEIGHT };
+    Vector2 player2Pos = { platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2,
+                            platforms[0].rect.y - PLAYER_HEIGHT };
 
-    Vector2 velocity = {0,0};
-    bool onGround = true;
+    Vector2 player1Vel = {0,0};
+    Vector2 player2Vel = {0,0};
+    bool player1OnGround = true;
+    bool player2OnGround = true;
 
     Camera2D camera = {0};
-    camera.offset = (Vector2){SCREEN_WIDTH/2, SCREEN_HEIGHT/2};
+    camera.offset = (Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
     camera.zoom = 1.0f;
 
     SetTargetFPS(60);
 
     while (!WindowShouldClose())
     {
-        if (IsKeyPressed(KEY_Q))
-            break;
+        if (IsKeyPressed(KEY_Q)) break;
 
+        // Respawn
         if (IsKeyPressed(KEY_R))
         {
             GeneratePlatforms(platforms);
@@ -183,100 +156,93 @@ void enterPlatformer(void)
             for (int i = 0; i < MAX_BULLETS; i++)
                 bullets[i].active = false;
 
-            playerPos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
-            playerPos.y = platforms[0].rect.y - PLAYER_HEIGHT;
-            velocity = (Vector2){0,0};
-            onGround = true;
+            player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
+            player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
+            player2Pos = player1Pos;
+
+            player1Vel = (Vector2){0,0};
+            player2Vel = (Vector2){0,0};
+            player1OnGround = player2OnGround = true;
         }
 
-        float previousY = playerPos.y;
+        float prevY1 = player1Pos.y;
+        float prevY2 = player2Pos.y;
 
-        if (IsKeyDown(KEY_A)) playerPos.x -= PLAYER_SPEED;
-        if (IsKeyDown(KEY_D)) playerPos.x += PLAYER_SPEED;
+        // Player controls
+        if (IsKeyDown(KEY_A)) player1Pos.x -= PLAYER_SPEED;
+        if (IsKeyDown(KEY_D)) player1Pos.x += PLAYER_SPEED;
+        if (IsKeyDown(KEY_LEFT)) player2Pos.x -= PLAYER_SPEED;
+        if (IsKeyDown(KEY_RIGHT)) player2Pos.x += PLAYER_SPEED;
 
-        if (IsKeyPressed(KEY_SPACE) && onGround)
-        {
-            velocity.y = JUMP_FORCE;
-            onGround = false;
-        }
+        if (IsKeyPressed(KEY_W) && player1OnGround) { player1Vel.y = JUMP_FORCE; player1OnGround = false; }
+        if (IsKeyPressed(KEY_UP) && player2OnGround) { player2Vel.y = JUMP_FORCE; player2OnGround = false; }
 
-        velocity.y += GRAVITY;
-        playerPos.y += velocity.y;
-        onGround = false;
+        player1Vel.y += GRAVITY;
+        player2Vel.y += GRAVITY;
+        player1Pos.y += player1Vel.y;
+        player2Pos.y += player2Vel.y;
+        player1OnGround = false;
+        player2OnGround = false;
 
+        // Platform collision
         for (int i = 0; i < PLATFORM_COUNT; i++)
         {
-            Rectangle platform = platforms[i].rect;
+            Rectangle plat = platforms[i].rect;
             Rectangle dropZone = platforms[i].dropZone;
 
-            if (velocity.y > 0)
+            // Player 1
+            if (player1Vel.y > 0)
             {
-                float previousBottom = previousY + PLAYER_HEIGHT;
-                float currentBottom = playerPos.y + PLAYER_HEIGHT;
-
-                bool crossingPlatform =
-                    previousBottom <= platform.y &&
-                    currentBottom >= platform.y &&
-                    playerPos.x + PLAYER_WIDTH > platform.x &&
-                    playerPos.x < platform.x + platform.width;
-
-                if (crossingPlatform)
+                float prevBot = prevY1 + PLAYER_HEIGHT;
+                float currBot = player1Pos.y + PLAYER_HEIGHT;
+                if (prevBot <= plat.y && currBot >= plat.y &&
+                    player1Pos.x + PLAYER_WIDTH > plat.x && player1Pos.x < plat.x + plat.width)
                 {
-                    Rectangle playerRect = {
-                        playerPos.x,
-                        playerPos.y,
-                        PLAYER_WIDTH,
-                        PLAYER_HEIGHT
-                    };
+                    Rectangle pRect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    bool inDropZone = CheckCollisionRecs(pRect, dropZone);
+                    if (inDropZone && IsKeyDown(KEY_S) && i != 0) continue;
+                    player1Pos.y = plat.y - PLAYER_HEIGHT;
+                    player1Vel.y = 0;
+                    player1OnGround = true;
+                }
+            }
 
-                    bool inDropZone = CheckCollisionRecs(playerRect, dropZone);
-
-                    if (inDropZone && IsKeyDown(KEY_S) && i != 0)
-                        continue;
-
-                    playerPos.y = platform.y - PLAYER_HEIGHT;
-                    velocity.y = 0;
-                    onGround = true;
+            // Player 2
+            if (player2Vel.y > 0)
+            {
+                float prevBot = prevY2 + PLAYER_HEIGHT;
+                float currBot = player2Pos.y + PLAYER_HEIGHT;
+                if (prevBot <= plat.y && currBot >= plat.y &&
+                    player2Pos.x + PLAYER_WIDTH > plat.x && player2Pos.x < plat.x + plat.width)
+                {
+                    Rectangle pRect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+                    bool inDropZone = CheckCollisionRecs(pRect, dropZone);
+                    if (inDropZone && IsKeyDown(KEY_DOWN) && i != 0) continue;
+                    player2Pos.y = plat.y - PLAYER_HEIGHT;
+                    player2Vel.y = 0;
+                    player2OnGround = true;
                 }
             }
         }
 
-        // Shooter update (STRONGER FIX)
+        // Shooter update
         for (int i = 0; i < PLATFORM_COUNT; i++)
         {
             if (!shooters[i].active) continue;
-
             shooters[i].shootTimer++;
-
             if (shooters[i].shootTimer >= SHOOT_INTERVAL)
             {
                 shooters[i].shootTimer = 0;
-
-                bool fired = false;
-
                 for (int b = 0; b < MAX_BULLETS; b++)
                 {
                     if (!bullets[b].active)
                     {
                         bullets[b].active = true;
-                        bullets[b].pos = (Vector2){
-                            shooters[i].rect.x + shooters[i].rect.width/2,
-                            shooters[i].rect.y + shooters[i].rect.height/2
-                        };
+                        bullets[b].pos = (Vector2){ shooters[i].rect.x + shooters[i].rect.width/2,
+                                                   shooters[i].rect.y + shooters[i].rect.height/2 };
                         bullets[b].direction = shooters[i].direction;
-                        fired = true;
                         break;
                     }
-                }
-
-                if (!fired)
-                {
-                    bullets[0].active = true;
-                    bullets[0].pos = (Vector2){
-                        shooters[i].rect.x + shooters[i].rect.width/2,
-                        shooters[i].rect.y + shooters[i].rect.height/2
-                    };
-                    bullets[0].direction = shooters[i].direction;
                 }
             }
         }
@@ -285,7 +251,6 @@ void enterPlatformer(void)
         for (int i = 0; i < MAX_BULLETS; i++)
         {
             if (!bullets[i].active) continue;
-
             bullets[i].pos.x += BULLET_SPEED * bullets[i].direction;
 
             if (bullets[i].pos.x < -2000 || bullets[i].pos.x > 4000)
@@ -294,36 +259,31 @@ void enterPlatformer(void)
                 continue;
             }
 
-            Rectangle bulletRect = {
-                bullets[i].pos.x - 5,
-                bullets[i].pos.y - 5,
-                10, 10
-            };
+            Rectangle bulletRect = { bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 };
 
-            Rectangle playerRect = {
-                playerPos.x,
-                playerPos.y,
-                PLAYER_WIDTH,
-                PLAYER_HEIGHT
-            };
+            Rectangle p1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+            Rectangle p2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
 
-            if (CheckCollisionRecs(bulletRect, playerRect))
+            if (CheckCollisionRecs(bulletRect, p1Rect) || CheckCollisionRecs(bulletRect, p2Rect))
             {
                 GeneratePlatforms(platforms);
                 RegenerateShooters(platforms, shooters);
+                for (int j = 0; j < MAX_BULLETS; j++) bullets[j].active = false;
 
-                for (int j = 0; j < MAX_BULLETS; j++)
-                    bullets[j].active = false;
+                player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
+                player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
+                player2Pos = player1Pos;
 
-                playerPos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
-                playerPos.y = platforms[0].rect.y - PLAYER_HEIGHT;
-                velocity = (Vector2){0,0};
-                onGround = true;
+                player1Vel = (Vector2){0,0};
+                player2Vel = (Vector2){0,0};
+                player1OnGround = player2OnGround = true;
                 break;
             }
         }
 
-        camera.target = playerPos;
+        // Camera follows average
+        camera.target.x = (player1Pos.x + player2Pos.x)/2;
+        camera.target.y = (player1Pos.y + player2Pos.y)/2;
 
         BeginDrawing();
         ClearBackground(DARKBLUE);
@@ -335,29 +295,28 @@ void enterPlatformer(void)
         {
             if (i == 0)
                 DrawRectangleRec(platforms[i].rect, BLACK);
-            else if (i == PLATFORM_COUNT - 1)
+            else if (i == PLATFORM_COUNT-1)
                 DrawRectangleRec(platforms[i].rect, GOLD);
             else
                 DrawRectangleRec(platforms[i].rect, GRAY);
 
             if (i != 0)
                 DrawRectangleRec(platforms[i].dropZone, ORANGE);
-        }
 
-        for (int i = 0; i < PLATFORM_COUNT; i++)
             if (shooters[i].active)
                 DrawRectangleRec(shooters[i].rect, PURPLE);
+        }
 
         for (int i = 0; i < MAX_BULLETS; i++)
             if (bullets[i].active)
                 DrawCircle(bullets[i].pos.x, bullets[i].pos.y, 5, YELLOW);
 
-        DrawRectangle(playerPos.x, playerPos.y,
-                      PLAYER_WIDTH, PLAYER_HEIGHT, RED);
+        DrawRectangle(player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, RED);
+        DrawRectangle(player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
 
         EndMode2D();
 
-        DrawText("Q: Lobby | R: Respawn | S: Drop Down", 20, 20, 20, WHITE);
+        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop Down | WASD: P1 | Arrow Keys: P2", 20, 20, 20, WHITE);
 
         EndDrawing();
     }
