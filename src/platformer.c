@@ -1,200 +1,317 @@
 #include "../include/platformer.h"
+#include <stdlib.h>
+#include <time.h>
+#include <math.h>
 
-#define MAX_ENEMIES 3
-#define MAX_BULLETS 20
+#define GRAVITY 0.6f
+#define ACCELERATION 0.8f
+#define FRICTION 0.85f
+#define MAX_SPEED_X 9.0f
+#define MAX_SPEED_Y 18.0f
+#define JUMP_FORCE -14.0f
+
+#define PLAYER_WIDTH 40
+#define PLAYER_HEIGHT 60
+
+#define PLATFORM_COUNT 4
+#define BALL_COUNT 6
+#define SHOOTER_COUNT PLATFORM_COUNT
+#define BULLET_POOL_SIZE 200   // effectively infinite
 
 typedef struct {
-    Rectangle rect;
-    float velY;
-    int jumpCount;
-    int maxJumps;
-    Color color;
-} Player;
+    Vector2 position;
+    Vector2 velocity;
+    bool active;
+} Bullet;
 
 typedef struct {
     Rectangle rect;
     float shootTimer;
-} Enemy;
+} Shooter;
 
 typedef struct {
-    Rectangle rect;
-    float speed;
-    bool active;
-} Bullet;
-
-void ResetPlayer(Player* p, float x, float y)
-{
-    p->rect.x = x;
-    p->rect.y = y;
-    p->velY = 0;
-    p->jumpCount = 0;
-}
+    Vector2 position;
+    Vector2 velocity;
+    float radius;
+} Ball;
 
 void enterPlatformer()
 {
-    float gravity = 0.6f;
-    float jumpForce = -12;
-    float moveSpeed = 5;
+    srand((unsigned int)time(NULL));
 
-    int score = 10;
+    // =====================
+    // PLATFORMS (Longer)
+    // =====================
+    Rectangle platforms[PLATFORM_COUNT];
+    for(int i = 0; i < PLATFORM_COUNT; i++)
+    {
+        platforms[i] = (Rectangle){
+            100,
+            HEIGHT - 100 - i * 250, //distance between each platform
+            700,          // MUCH LONGER
+            20
+        };
+    }
 
-    // ===== PLAYERS =====
-    Player p1 = {{100, 400, 40, 60}, 0, 0, 2, BLUE};
-    Player p2 = {{200, 400, 40, 60}, 0, 0, 2, GREEN};
-
-    // ===== GROUND =====
-    Rectangle ground = {0, HEIGHT - 40, 3000, 40};
-
-    // ===== ENEMIES =====
-    Enemy enemies[MAX_ENEMIES] = {
-        {{600, HEIGHT-100, 40, 60}, 0},
-        {{1100, HEIGHT-100, 40, 60}, 0},
-        {{1600, HEIGHT-100, 40, 60}, 0}
+    // =====================
+    // PLAYER (spawn on platform)
+    // =====================
+    Vector2 playerPos = {
+        platforms[0].x + 60,
+        platforms[0].y - PLAYER_HEIGHT
     };
 
-    // ===== BULLETS =====
-    Bullet bullets[MAX_BULLETS] = {0};
+    Vector2 playerVel = {0, 0};
+    int jumpCount = 0;
+    const int maxJumps = 2;
 
+    // =====================
+    // CAMERA
+    // =====================
     Camera2D camera = {0};
-    camera.offset = (Vector2){WIDTH/2.0f, HEIGHT/2.0f};
     camera.zoom = 1.0f;
+    camera.offset = (Vector2){WIDTH/2.0f, HEIGHT/2.0f};
+    camera.target = playerPos;
 
-    while (!WindowShouldClose())
+    // =====================
+    // SHOOTERS (at platform ends)
+    // =====================
+    Shooter shooters[SHOOTER_COUNT];
+    for(int i = 0; i < SHOOTER_COUNT; i++)
     {
-        if (IsKeyPressed(KEY_Q)) break;
+        shooters[i].rect = (Rectangle){
+            platforms[i].x + platforms[i].width - 40,
+            platforms[i].y - 40,
+            40,
+            40
+        };
+        shooters[i].shootTimer = 0;
+    }
 
-        // ======================
-        // PLAYER 1 CONTROLS
-        // ======================
-        if (IsKeyDown(KEY_A)) p1.rect.x -= moveSpeed;
-        if (IsKeyDown(KEY_D)) p1.rect.x += moveSpeed;
+    // =====================
+    // BULLETS (large pool)
+    // =====================
+    Bullet bullets[BULLET_POOL_SIZE] = {0};
 
-        if (IsKeyPressed(KEY_SPACE) && p1.jumpCount < p1.maxJumps)
+    // =====================
+    // BALLS
+    // =====================
+    Ball balls[BALL_COUNT];
+    for(int i = 0; i < BALL_COUNT; i++)
+    {
+        balls[i].position = (Vector2){
+            300 + i * 600,
+            HEIGHT - 150 - (i % 3) * 300
+        };
+
+        balls[i].velocity = (Vector2){
+            (rand() % 3 + 2) * (rand() % 2 ? 1 : -1),
+            0
+        };
+
+        balls[i].radius = 20;
+    }
+
+    while(!WindowShouldClose() && !IsKeyPressed(KEY_Q))
+    {
+        float delta = GetFrameTime();
+
+        // =====================
+        // INPUT
+        // =====================
+        if(IsKeyDown(KEY_A))
+            playerVel.x -= ACCELERATION;
+
+        if(IsKeyDown(KEY_D))
+            playerVel.x += ACCELERATION;
+
+        if(playerVel.x > MAX_SPEED_X) playerVel.x = MAX_SPEED_X;
+        if(playerVel.x < -MAX_SPEED_X) playerVel.x = -MAX_SPEED_X;
+
+        if(IsKeyPressed(KEY_SPACE) && jumpCount < maxJumps)
         {
-            p1.velY = jumpForce;
-            p1.jumpCount++;
+            playerVel.y = JUMP_FORCE;
+            jumpCount++;
         }
 
-        // ======================
-        // PLAYER 2 CONTROLS
-        // ======================
-        if (IsKeyDown(KEY_LEFT)) p2.rect.x -= moveSpeed;
-        if (IsKeyDown(KEY_RIGHT)) p2.rect.x += moveSpeed;
+        // =====================
+        // PHYSICS
+        // =====================
+        playerVel.y += GRAVITY;
+        if(playerVel.y > MAX_SPEED_Y)
+            playerVel.y = MAX_SPEED_Y;
 
-        if (IsKeyPressed(KEY_UP) && p2.jumpCount < p2.maxJumps)
+        playerVel.x *= FRICTION;
+
+        playerPos.x += playerVel.x;
+        playerPos.y += playerVel.y;
+
+        Rectangle playerRect = {
+            playerPos.x,
+            playerPos.y,
+            PLAYER_WIDTH,
+            PLAYER_HEIGHT
+        };
+
+        // =====================
+        // PLATFORM COLLISION
+        // =====================
+        for(int i = 0; i < PLATFORM_COUNT; i++)
         {
-            p2.velY = jumpForce;
-            p2.jumpCount++;
-        }
-
-        // ======================
-        // GRAVITY
-        // ======================
-        Player* players[2] = {&p1, &p2};
-
-        for (int i = 0; i < 2; i++)
-        {
-            players[i]->velY += gravity;
-            players[i]->rect.y += players[i]->velY;
-
-            if (CheckCollisionRecs(players[i]->rect, ground))
+            if(CheckCollisionRecs(playerRect, platforms[i]) &&
+               playerVel.y >= 0 &&
+               playerPos.y + PLAYER_HEIGHT <= platforms[i].y + 15)
             {
-                players[i]->rect.y = ground.y - players[i]->rect.height;
-                players[i]->velY = 0;
-                players[i]->jumpCount = 0;
+                playerPos.y = platforms[i].y - PLAYER_HEIGHT;
+                playerVel.y = 0;
+                jumpCount = 0;
             }
         }
 
-        // ======================
-        // ENEMY SHOOTING
-        // ======================
-        for (int i = 0; i < MAX_ENEMIES; i++)
+        // =====================
+        // RESPAWN IF FALL
+        // =====================
+        if(playerPos.y > HEIGHT + 200)
         {
-            enemies[i].shootTimer += GetFrameTime();
+            playerPos = (Vector2){
+                platforms[0].x + 60,
+                platforms[0].y - PLAYER_HEIGHT
+            };
+            playerVel = (Vector2){0,0};
+            jumpCount = 0;
+        }
 
-            if (enemies[i].shootTimer > 2.0f)
+        // =====================
+        // SHOOTERS
+        // =====================
+        for(int i = 0; i < SHOOTER_COUNT; i++)
+        {
+            shooters[i].shootTimer += delta;
+
+            if(shooters[i].shootTimer > 1.5f)
             {
-                enemies[i].shootTimer = 0;
+                shooters[i].shootTimer = 0;
 
-                // Find free bullet
-                for (int b = 0; b < MAX_BULLETS; b++)
+                for(int b = 0; b < BULLET_POOL_SIZE; b++)
                 {
-                    if (!bullets[b].active)
+                    if(!bullets[b].active)
                     {
                         bullets[b].active = true;
-                        bullets[b].rect = (Rectangle){
-                            enemies[i].rect.x,
-                            enemies[i].rect.y + 20,
-                            15,
-                            5
+
+                        bullets[b].position = (Vector2){
+                            shooters[i].rect.x,
+                            shooters[i].rect.y + 20
                         };
-                        bullets[b].speed = -8;
+
+                        bullets[b].velocity = (Vector2){-7.0f, 0}; 
                         break;
                     }
                 }
             }
         }
 
-        // ======================
+        // =====================
         // BULLET UPDATE
-        // ======================
-        for (int i = 0; i < MAX_BULLETS; i++)
+        // =====================
+        float camLeft   = camera.target.x - WIDTH/2;
+        float camRight  = camera.target.x + WIDTH/2;
+
+        for(int i = 0; i < BULLET_POOL_SIZE; i++)
         {
-            if (!bullets[i].active) continue;
-
-            bullets[i].rect.x += bullets[i].speed;
-
-            // Offscreen deactivate
-            if (bullets[i].rect.x < 0)
-                bullets[i].active = false;
-
-            // Check collision with players
-            for (int p = 0; p < 2; p++)
+            if(bullets[i].active)
             {
-                if (CheckCollisionRecs(bullets[i].rect, players[p]->rect))
+                bullets[i].position.x += bullets[i].velocity.x;
+
+                Rectangle bulletRect = {
+                    bullets[i].position.x,
+                    bullets[i].position.y,
+                    12,
+                    5
+                };
+
+                // Collision with player
+                if(CheckCollisionRecs(playerRect, bulletRect))
+                {
+                    playerPos = (Vector2){
+                        platforms[0].x + 60,
+                        platforms[0].y - PLAYER_HEIGHT
+                    };
+                    playerVel = (Vector2){0,0};
+                    jumpCount = 0;
+                    bullets[i].active = false;
+                }
+
+                // Deactivate if off camera
+                if(bullets[i].position.x < camLeft - 50 ||
+                   bullets[i].position.x > camRight + 50)
                 {
                     bullets[i].active = false;
-                    score--;
                 }
             }
         }
 
-        // ======================
-        // CAMERA FOLLOW (P1)
-        // ======================
+        // =====================
+        // BALLS
+        // =====================
+        for(int i = 0; i < BALL_COUNT; i++)
+        {
+            balls[i].position.x += balls[i].velocity.x;
+
+            if(balls[i].position.x < 0 || balls[i].position.x > 3000)
+                balls[i].velocity.x *= -1;
+
+            if(CheckCollisionCircleRec(
+                balls[i].position,
+                balls[i].radius,
+                playerRect))
+            {
+                playerPos = (Vector2){
+                    platforms[0].x + 60,
+                    platforms[0].y - PLAYER_HEIGHT
+                };
+                playerVel = (Vector2){0,0};
+                jumpCount = 0;
+            }
+        }
+
+        // =====================
+        // CAMERA
+        // =====================
         camera.target = (Vector2){
-            p1.rect.x + p1.rect.width/2,
-            p1.rect.y + p1.rect.height/2
+            playerPos.x + PLAYER_WIDTH/2,
+            playerPos.y + PLAYER_HEIGHT/2
         };
 
-        // ======================
+        // =====================
         // DRAW
-        // ======================
+        // =====================
         BeginDrawing();
-        ClearBackground(SKYBLUE);
-
+        ClearBackground(BLACK);
         BeginMode2D(camera);
 
-        DrawRectangleRec(ground, DARKBROWN);
+        for(int i = 0; i < PLATFORM_COUNT; i++)
+            DrawRectangleRec(platforms[i], DARKBROWN);
 
-        for (int i = 0; i < MAX_ENEMIES; i++)
-            DrawRectangleRec(enemies[i].rect, MAROON);
+        for(int i = 0; i < SHOOTER_COUNT; i++)
+            DrawRectangleRec(shooters[i].rect, RED);
 
-        for (int i = 0; i < MAX_BULLETS; i++)
-            if (bullets[i].active)
-                DrawRectangleRec(bullets[i].rect, BLACK);
+        for(int i = 0; i < BULLET_POOL_SIZE; i++)
+            if(bullets[i].active)
+                DrawRectangle(
+                    bullets[i].position.x,
+                    bullets[i].position.y,
+                    12, 5,
+                    YELLOW
+                );
 
-        DrawRectangleRec(p1.rect, p1.color);
-        DrawRectangleRec(p2.rect, p2.color);
+        for(int i = 0; i < BALL_COUNT; i++)
+            DrawCircleV(balls[i].position, balls[i].radius, BROWN);
+
+        DrawRectangle(playerPos.x, playerPos.y,
+                      PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
 
         EndMode2D();
-
-        DrawText(TextFormat("Score: %d", score), 20, 20, 30, BLACK);
-        DrawText("P1: WASD + SPACE | P2: ARROWS + RCTRL", 20, 60, 20, BLACK);
-        DrawText("Q to Quit", 20, 90, 20, BLACK);
-
-        DrawFPS(0, 0);
-
+        DrawFPS(10,10);
         EndDrawing();
     }
 }
