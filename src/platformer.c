@@ -142,6 +142,7 @@ void enterPlatformer(void)
     camera.offset = (Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
     camera.zoom = 1.0f;
 
+    float winTextTimer = 0.0f; // for floating text effect
     SetTargetFPS(60);
 
     while (!WindowShouldClose())
@@ -166,19 +167,23 @@ void enterPlatformer(void)
             player1OnGround = player2OnGround = true;
 
             score = 0;
+            winTextTimer = 0.0f;
         }
 
         Rectangle topPlatform = platforms[PLATFORM_COUNT-1].rect;
+
+        // Define player rectangles early for collision checks
         Rectangle player1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
         Rectangle player2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
 
-        bool win = CheckCollisionRecs(player1Rect, topPlatform) &&
-                   CheckCollisionRecs(player2Rect, topPlatform);
+        // --- WIN CHECK ---
+        bool player1OnTop = (player1OnGround && player1Pos.y + PLAYER_HEIGHT == topPlatform.y);
+        bool player2OnTop = (player2OnGround && player2Pos.y + PLAYER_HEIGHT == topPlatform.y);
+        bool win = player1OnTop && player2OnTop;
 
         if (!win)
         {
             // --- NORMAL GAME UPDATES ---
-
             float prevY1 = player1Pos.y;
             float prevY2 = player2Pos.y;
 
@@ -245,7 +250,7 @@ void enterPlatformer(void)
                 }
             }
 
-            // shooter & bullet updates (unchanged)
+            // shooter & bullet updates
             for (int i = 0; i < PLATFORM_COUNT; i++)
             {
                 if (!shooters[i].active) continue;
@@ -301,6 +306,13 @@ void enterPlatformer(void)
             camera.target.x = (player1Pos.x + player2Pos.x)/2;
             camera.target.y = (player1Pos.y + player2Pos.y)/2;
         }
+        else
+        {
+            // --- WIN SCREEN CAMERA ---
+            camera.target.x = topPlatform.x + topPlatform.width/2;
+            camera.target.y = topPlatform.y + topPlatform.height/2;
+            winTextTimer += 0.05f;
+        }
 
         // --- DRAWING ---
         BeginDrawing();
@@ -308,9 +320,15 @@ void enterPlatformer(void)
 
         if (win)
         {
-            // Freeze everything and show win screen
-            DrawText("YOU WIN!", SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 - 20, 60, GOLD);
-            DrawText("Press R to Play Again or Q to Quit", SCREEN_WIDTH/2 - 200, SCREEN_HEIGHT/2 + 50, 30, WHITE);
+            // Dimmed background
+            DrawRectangle(0,0,SCREEN_WIDTH,SCREEN_HEIGHT,(Color){0,0,0,150});
+
+            // Floating "YOU WIN!" text
+            int floatOffset = (int)(10 * sin(winTextTimer));
+            DrawText("YOU WIN!", SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2 - 40 + floatOffset, 60, GOLD);
+            DrawText("Press R to Play Again or Q to Quit", SCREEN_WIDTH/2 - 220, SCREEN_HEIGHT/2 + 50 + floatOffset, 30, WHITE);
+
+            // Players hidden on win screen
         }
         else
         {
