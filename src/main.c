@@ -9,6 +9,8 @@
 int main(int argc, char** argv)
 {
 
+	SetRandomSeed((int)GetTime());
+
 	const int width = 1280;
 	const int height = 960;
 
