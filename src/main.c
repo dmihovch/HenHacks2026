@@ -3,9 +3,9 @@
 #include "../include/bottles.h"
 #include "../include/quickdraw.h"
 
-#define QUICK_DRAW 1
-#define BOTTLES 2
-#define PLATFORMER 3
+#define QUICK_DRAW KEY_ONE
+#define BOTTLES KEY_TWO
+#define PLATFORMER KEY_THREE 
 int main(int argc, char** argv)
 {
 
@@ -22,18 +22,28 @@ int main(int argc, char** argv)
 	int currentScene = 0;
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
 	{
-		if(currentScene == QUICK_DRAW)
+
+		currentScene = GetKeyPressed();
+
+		if(IsKeyPressed(QUICK_DRAW))
 		{
 			enterQuickdraw();
 		}
-		if(currentScene == BOTTLES)
+		if(IsKeyPressed(BOTTLES))
 		{
 			enterBottles();
 		}
-		if(currentScene == PLATFORMER)
+		if(IsKeyPressed(PLATFORMER))
 		{
 			enterPlatformer();
 		}
+
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+		DrawText("Town Lobby",WIDTH/2,HEIGHT/2,20,RED);
+
+		EndDrawing();
 
 	}
 
