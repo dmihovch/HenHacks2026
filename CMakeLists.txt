@@ -16,7 +16,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 # Add your source files here
-add_executable(${PROJECT_NAME} src/main.c)
+add_executable(${PROJECT_NAME} src/main.c src/bottles.c src/platformer.c src/quickdraw.c)
 
 # Link Raylib to your game
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)

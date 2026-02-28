@@ -1,11 +1,11 @@
 #include <raylib.h>
-#include "../include/minigame2.h"
-#include "../include/minigame3.h"
-#include "../include/quickDraw.h"
+#include "../include/platformer.h"
+#include "../include/bottles.h"
+#include "../include/quickdraw.h"
 
 #define QUICK_DRAW 1
-#define MINIGAME_2 2
-#define MINIGAME_3 3
+#define BOTTLES 2
+#define PLATFORMER 3
 int main(int argc, char** argv)
 {
 
@@ -24,15 +24,15 @@ int main(int argc, char** argv)
 	{
 		if(currentScene == QUICK_DRAW)
 		{
-			quickDraw();
+			enterQuickdraw();
 		}
-		if(currentScene == MINIGAME_2)
+		if(currentScene == BOTTLES)
 		{
-			miniGame2();
+			enterBottles();
 		}
-		if(currentScene == MINIGAME_3)
+		if(currentScene == PLATFORMER)
 		{
-			miniGame3();
+			enterPlatformer();
 		}
 
 	}

@@ -1,3 +1,3 @@
 #include <raylib.h>
 
-void quickDraw();
+void enterBottles();
