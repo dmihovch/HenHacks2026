@@ -7,11 +7,11 @@
 
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 60
-#define PLAYER_SPEED 5
+#define PLAYER_SPEED 6
 #define JUMP_FORCE -17
 #define GRAVITY 0.8f
 
-#define PLATFORM_COUNT 20
+#define PLATFORM_COUNT 30
 
 #define PLATFORM_WIDTH 500
 #define PLATFORM_HEIGHT 20
@@ -40,12 +40,7 @@ void GeneratePlatforms(Platform platforms[])
         PLATFORM_HEIGHT
     };
 
-    platforms[0].dropZone = (Rectangle){
-        baseX + PLATFORM_WIDTH * 0.4f,
-        baseY,
-        PLATFORM_WIDTH * 0.2f,
-        PLATFORM_HEIGHT
-    };
+    platforms[0].dropZone = (Rectangle){ 0, 0, 0, 0 };
 
     float prevX = baseX;
     float prevY = baseY;
@@ -53,14 +48,14 @@ void GeneratePlatforms(Platform platforms[])
 
     for (int i = 1; i < PLATFORM_COUNT; i++)
     {
-        float newWidth = GetRandomValue(260, 600);
+        float newWidth = GetRandomValue(260, 500);
 
         // Controls how much the platforms overlap horizontally
         // Lower overlap = harder jump
-        float overlap = GetRandomValue(120, 220);
+        float overlap = GetRandomValue(80, 160);
 
         // Enforce strong horizontal displacement
-        float minSeparation = 180;
+        float minSeparation = 450;
 
         int direction = GetRandomValue(0, 1) == 0 ? -1 : 1;
 
@@ -208,6 +203,8 @@ void enterPlatformer(void)
 
         BeginDrawing();
         ClearBackground(DARKBLUE);
+        DrawFPS(100, 0);
+
 
         BeginMode2D(camera);
 
