@@ -39,7 +39,7 @@ typedef struct {
     bool active;
 } Bullet;
 
-// Generate platforms
+// generate platforms
 void GeneratePlatforms(Platform platforms[])
 {
     float baseX = 400;
@@ -83,7 +83,7 @@ void GeneratePlatforms(Platform platforms[])
     }
 }
 
-// Generate shooters based on platforms
+// generate shooters based on platforms
 void RegenerateShooters(Platform platforms[], Shooter shooters[])
 {
     for (int i = 0; i < PLATFORM_COUNT; i++)
@@ -112,7 +112,7 @@ void RegenerateShooters(Platform platforms[], Shooter shooters[])
     }
 }
 
-// Enter platformer
+// when enter platformer..
 void enterPlatformer(void)
 {
     srand(time(NULL));
@@ -137,7 +137,7 @@ void enterPlatformer(void)
     bool player1OnGround = true;
     bool player2OnGround = true;
 
-    int score = 0; // <-- Score system
+    int score = 0;
     Camera2D camera = {0};
     camera.offset = (Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
     camera.zoom = 1.0f;
@@ -148,7 +148,7 @@ void enterPlatformer(void)
     {
         if (IsKeyPressed(KEY_Q)) break;
 
-        // Respawn
+        // respawn
         if (IsKeyPressed(KEY_R))
         {
             GeneratePlatforms(platforms);
@@ -165,173 +165,185 @@ void enterPlatformer(void)
             player2Vel = (Vector2){0,0};
             player1OnGround = player2OnGround = true;
 
-            score = 0; // Reset score on respawn
+            score = 0;
         }
 
-        float prevY1 = player1Pos.y;
-        float prevY2 = player2Pos.y;
+        Rectangle topPlatform = platforms[PLATFORM_COUNT-1].rect;
+        Rectangle player1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+        Rectangle player2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
 
-        // Player controls
-        if (IsKeyDown(KEY_A)) player1Pos.x -= PLAYER_SPEED;
-        if (IsKeyDown(KEY_D)) player1Pos.x += PLAYER_SPEED;
-        if (IsKeyDown(KEY_LEFT)) player2Pos.x -= PLAYER_SPEED;
-        if (IsKeyDown(KEY_RIGHT)) player2Pos.x += PLAYER_SPEED;
+        bool win = CheckCollisionRecs(player1Rect, topPlatform) &&
+                   CheckCollisionRecs(player2Rect, topPlatform);
 
-        if (IsKeyPressed(KEY_W) && player1OnGround) { player1Vel.y = JUMP_FORCE; player1OnGround = false; }
-        if (IsKeyPressed(KEY_UP) && player2OnGround) { player2Vel.y = JUMP_FORCE; player2OnGround = false; }
-
-        player1Vel.y += GRAVITY;
-        player2Vel.y += GRAVITY;
-        player1Pos.y += player1Vel.y;
-        player2Pos.y += player2Vel.y;
-        player1OnGround = false;
-        player2OnGround = false;
-
-        // Platform collision
-        for (int i = 0; i < PLATFORM_COUNT; i++)
+        if (!win)
         {
-            Rectangle plat = platforms[i].rect;
-            Rectangle dropZone = platforms[i].dropZone;
+            // --- NORMAL GAME UPDATES ---
 
-            // Player 1
-            if (player1Vel.y > 0)
+            float prevY1 = player1Pos.y;
+            float prevY2 = player2Pos.y;
+
+            // player controls
+            if (IsKeyDown(KEY_A)) player1Pos.x -= PLAYER_SPEED;
+            if (IsKeyDown(KEY_D)) player1Pos.x += PLAYER_SPEED;
+            if (IsKeyDown(KEY_LEFT)) player2Pos.x -= PLAYER_SPEED;
+            if (IsKeyDown(KEY_RIGHT)) player2Pos.x += PLAYER_SPEED;
+
+            if (IsKeyPressed(KEY_W) && player1OnGround) { player1Vel.y = JUMP_FORCE; player1OnGround = false; }
+            if (IsKeyPressed(KEY_UP) && player2OnGround) { player2Vel.y = JUMP_FORCE; player2OnGround = false; }
+
+            player1Vel.y += GRAVITY;
+            player2Vel.y += GRAVITY;
+            player1Pos.y += player1Vel.y;
+            player2Pos.y += player2Vel.y;
+            player1OnGround = false;
+            player2OnGround = false;
+
+            // platform collision & score
+            for (int i = 0; i < PLATFORM_COUNT; i++)
             {
-                float prevBot = prevY1 + PLAYER_HEIGHT;
-                float currBot = player1Pos.y + PLAYER_HEIGHT;
-                if (prevBot <= plat.y && currBot >= plat.y &&
-                    player1Pos.x + PLAYER_WIDTH > plat.x && player1Pos.x < plat.x + plat.width)
+                Rectangle plat = platforms[i].rect;
+                Rectangle dropZone = platforms[i].dropZone;
+
+                // player 1
+                if (player1Vel.y > 0)
                 {
-                    Rectangle pRect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-                    bool inDropZone = CheckCollisionRecs(pRect, dropZone);
-                    if (inDropZone && IsKeyDown(KEY_S) && i != 0) continue;
-                    player1Pos.y = plat.y - PLAYER_HEIGHT;
-                    player1Vel.y = 0;
-                    player1OnGround = true;
-
-                    // Update score when reaching higher
-                    int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
-                    if (newScore > score) score = newScore;
-                }
-            }
-
-            // Player 2
-            if (player2Vel.y > 0)
-            {
-                float prevBot = prevY2 + PLAYER_HEIGHT;
-                float currBot = player2Pos.y + PLAYER_HEIGHT;
-                if (prevBot <= plat.y && currBot >= plat.y &&
-                    player2Pos.x + PLAYER_WIDTH > plat.x && player2Pos.x < plat.x + plat.width)
-                {
-                    Rectangle pRect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-                    bool inDropZone = CheckCollisionRecs(pRect, dropZone);
-                    if (inDropZone && IsKeyDown(KEY_DOWN) && i != 0) continue;
-                    player2Pos.y = plat.y - PLAYER_HEIGHT;
-                    player2Vel.y = 0;
-                    player2OnGround = true;
-
-                    // Update score
-                    int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
-                    if (newScore > score) score = newScore;
-                }
-            }
-        }
-
-        // Shooter update
-        for (int i = 0; i < PLATFORM_COUNT; i++)
-        {
-            if (!shooters[i].active) continue;
-            shooters[i].shootTimer++;
-            if (shooters[i].shootTimer >= SHOOT_INTERVAL)
-            {
-                shooters[i].shootTimer = 0;
-                for (int b = 0; b < MAX_BULLETS; b++)
-                {
-                    if (!bullets[b].active)
+                    float prevBot = prevY1 + PLAYER_HEIGHT;
+                    float currBot = player1Pos.y + PLAYER_HEIGHT;
+                    if (prevBot <= plat.y && currBot >= plat.y &&
+                        player1Pos.x + PLAYER_WIDTH > plat.x && player1Pos.x < plat.x + plat.width)
                     {
-                        bullets[b].active = true;
-                        bullets[b].pos = (Vector2){ shooters[i].rect.x + shooters[i].rect.width/2,
-                                                   shooters[i].rect.y + shooters[i].rect.height/2 };
-                        bullets[b].direction = shooters[i].direction;
-                        break;
+                        Rectangle pRect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+                        bool inDropZone = CheckCollisionRecs(pRect, dropZone);
+                        if (inDropZone && IsKeyDown(KEY_S) && i != 0) continue;
+                        player1Pos.y = plat.y - PLAYER_HEIGHT;
+                        player1Vel.y = 0;
+                        player1OnGround = true;
+
+                        int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
+                        if (newScore > score) score = newScore;
+                    }
+                }
+
+                // player 2
+                if (player2Vel.y > 0)
+                {
+                    float prevBot = prevY2 + PLAYER_HEIGHT;
+                    float currBot = player2Pos.y + PLAYER_HEIGHT;
+                    if (prevBot <= plat.y && currBot >= plat.y &&
+                        player2Pos.x + PLAYER_WIDTH > plat.x && player2Pos.x < plat.x + plat.width)
+                    {
+                        Rectangle pRect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+                        bool inDropZone = CheckCollisionRecs(pRect, dropZone);
+                        if (inDropZone && IsKeyDown(KEY_DOWN) && i != 0) continue;
+                        player2Pos.y = plat.y - PLAYER_HEIGHT;
+                        player2Vel.y = 0;
+                        player2OnGround = true;
+
+                        int newScore = (int)((850 - plat.y) / VERTICAL_SPACING);
+                        if (newScore > score) score = newScore;
                     }
                 }
             }
-        }
 
-        // Bullet update
-        for (int i = 0; i < MAX_BULLETS; i++)
-        {
-            if (!bullets[i].active) continue;
-            bullets[i].pos.x += BULLET_SPEED * bullets[i].direction;
-
-            if (bullets[i].pos.x < -2000 || bullets[i].pos.x > 4000)
+            // shooter & bullet updates (unchanged)
+            for (int i = 0; i < PLATFORM_COUNT; i++)
             {
-                bullets[i].active = false;
-                continue;
+                if (!shooters[i].active) continue;
+                shooters[i].shootTimer++;
+                if (shooters[i].shootTimer >= SHOOT_INTERVAL)
+                {
+                    shooters[i].shootTimer = 0;
+                    for (int b = 0; b < MAX_BULLETS; b++)
+                    {
+                        if (!bullets[b].active)
+                        {
+                            bullets[b].active = true;
+                            bullets[b].pos = (Vector2){ shooters[i].rect.x + shooters[i].rect.width/2,
+                                                       shooters[i].rect.y + shooters[i].rect.height/2 };
+                            bullets[b].direction = shooters[i].direction;
+                            break;
+                        }
+                    }
+                }
             }
 
-            Rectangle bulletRect = { bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 };
-            Rectangle p1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-            Rectangle p2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-
-            if (CheckCollisionRecs(bulletRect, p1Rect) || CheckCollisionRecs(bulletRect, p2Rect))
+            for (int i = 0; i < MAX_BULLETS; i++)
             {
-                GeneratePlatforms(platforms);
-                RegenerateShooters(platforms, shooters);
-                for (int j = 0; j < MAX_BULLETS; j++) bullets[j].active = false;
+                if (!bullets[i].active) continue;
+                bullets[i].pos.x += BULLET_SPEED * bullets[i].direction;
 
-                player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
-                player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
-                player2Pos = player1Pos;
+                if (bullets[i].pos.x < -2000 || bullets[i].pos.x > 4000)
+                {
+                    bullets[i].active = false;
+                    continue;
+                }
 
-                player1Vel = (Vector2){0,0};
-                player2Vel = (Vector2){0,0};
-                player1OnGround = player2OnGround = true;
+                Rectangle bulletRect = { bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 };
+                if (CheckCollisionRecs(bulletRect, player1Rect) || CheckCollisionRecs(bulletRect, player2Rect))
+                {
+                    GeneratePlatforms(platforms);
+                    RegenerateShooters(platforms, shooters);
+                    for (int j = 0; j < MAX_BULLETS; j++) bullets[j].active = false;
 
-                score = 0; // Reset score
-                break;
+                    player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
+                    player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
+                    player2Pos = player1Pos;
+
+                    player1Vel = (Vector2){0,0};
+                    player2Vel = (Vector2){0,0};
+                    player1OnGround = player2OnGround = true;
+
+                    score = 0;
+                    break;
+                }
             }
+
+            camera.target.x = (player1Pos.x + player2Pos.x)/2;
+            camera.target.y = (player1Pos.y + player2Pos.y)/2;
         }
 
-        // Camera follows average of two players
-        camera.target.x = (player1Pos.x + player2Pos.x)/2;
-        camera.target.y = (player1Pos.y + player2Pos.y)/2;
-
+        // --- DRAWING ---
         BeginDrawing();
         ClearBackground(DARKBLUE);
-        DrawFPS(100,0);
 
-        BeginMode2D(camera);
-
-        for (int i = 0; i < PLATFORM_COUNT; i++)
+        if (win)
         {
-            if (i == 0)
-                DrawRectangleRec(platforms[i].rect, BLACK);
-            else if (i == PLATFORM_COUNT-1)
-                DrawRectangleRec(platforms[i].rect, GOLD);
-            else
-                DrawRectangleRec(platforms[i].rect, GRAY);
-
-            if (i != 0)
-                DrawRectangleRec(platforms[i].dropZone, ORANGE);
-
-            if (shooters[i].active)
-                DrawRectangleRec(shooters[i].rect, PURPLE);
+            // Freeze everything and show win screen
+            DrawText("YOU WIN!", SCREEN_WIDTH/2 - 100, SCREEN_HEIGHT/2 - 20, 60, GOLD);
+            DrawText("Press R to Play Again or Q to Quit", SCREEN_WIDTH/2 - 200, SCREEN_HEIGHT/2 + 50, 30, WHITE);
         }
+        else
+        {
+            BeginMode2D(camera);
 
-        for (int i = 0; i < MAX_BULLETS; i++)
-            if (bullets[i].active)
-                DrawCircle(bullets[i].pos.x, bullets[i].pos.y, 5, YELLOW);
+            for (int i = 0; i < PLATFORM_COUNT; i++)
+            {
+                if (i == 0)
+                    DrawRectangleRec(platforms[i].rect, BLACK);
+                else if (i == PLATFORM_COUNT-1)
+                    DrawRectangleRec(platforms[i].rect, GOLD);
+                else
+                    DrawRectangleRec(platforms[i].rect, GRAY);
 
-        DrawRectangle(player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, RED);
-        DrawRectangle(player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
+                if (i != 0)
+                    DrawRectangleRec(platforms[i].dropZone, ORANGE);
 
-        EndMode2D();
+                if (shooters[i].active)
+                    DrawRectangleRec(shooters[i].rect, PURPLE);
+            }
 
-        // Draw score
-        DrawText(TextFormat("Score: %i", score), 20, 20, 20, WHITE);
+            for (int i = 0; i < MAX_BULLETS; i++)
+                if (bullets[i].active)
+                    DrawCircle(bullets[i].pos.x, bullets[i].pos.y, 5, YELLOW);
 
-        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop | WASD: P1 | Arrows: P2", 20, 50, 20, WHITE);
+            DrawRectangle(player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, RED);
+            DrawRectangle(player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
+
+            EndMode2D();
+
+            DrawText(TextFormat("Score: %i", score), 20, 20, 20, WHITE);
+            DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop | WASD: P1 | Arrows: P2", 20, 50, 20, WHITE);
+        }
 
         EndDrawing();
     }
