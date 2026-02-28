@@ -20,13 +20,6 @@ typedef struct Bullet {
 
 void enterBottles(int width, int height)
 {
-
-	Vector2 ballPosition1 = { (float)width/2, (float)height - (float)height/10 };
-	Vector2 ballVelocity1 = { 0, 0 };
-	
-	Vector2 ballPosition2 = { (float)width/2, (float)height - (float)height/10 };
-	Vector2 ballVelocity2 = { 0, 0 };
-
 	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 350.0f;  // max movement speed
 	const float FRICTION = 600.0f;   // how fast you slow down
@@ -50,6 +43,12 @@ void enterBottles(int width, int height)
 	float shootCooldown1 = 0.0f;
 	float shootCooldown2 = 0.0f;
 	float shootInterval = 0.5f;
+
+	Vector2 ballPosition1 = { (float)leftX, (float)height - (float)height/10 };
+	Vector2 ballVelocity1 = { 0, 0 };
+	
+	Vector2 ballPosition2 = { (float)rightX, (float)height - (float)height/10 };
+	Vector2 ballVelocity2 = { 0, 0 };
 
     int score1 = 0;
 	int score2 = 0;
