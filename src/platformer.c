@@ -7,7 +7,7 @@ void enterPlatformer()
 		BeginDrawing();
 		DrawFPS(0,0);
 		ClearBackground(BLACK);
-		DrawText("Platormer",WIDTH/2, HEIGHT/2, 20, RED);
+		DrawText("this is the updated Platormer",WIDTH/2, HEIGHT/2, 20, RED);
 		EndDrawing();
 	}
 }
