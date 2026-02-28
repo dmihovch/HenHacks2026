@@ -29,14 +29,20 @@ void enterBottles(int width, int height)
 	const float BULLET_SPEED = 1800.0f;
 
 	// Bottle System
-	Bottle bottles[10] = {0};
+	Bottle bottles[100] = {0};
     int bottleCount = 0;
     float spawnTimer = 0.0f;
+	float spawnInterval = 3.0f;      // starts at 3 seconds
+	float minInterval = 1.0f;        // never go faster than 0.5 seconds
+	float intervalDecay = 0.90f;     // multiply interval by this each spawn
+
+	float barWidth = width * 0.75f;
+	float barHeight = height * 0.05f;
+	float leftX  = (width - barWidth) / 2.0f;
+	float rightX = leftX + barWidth;
 
 	// Bullet system
     Bullet bullets[20] = {0};
-    
-
 
     int score = 0;
 
@@ -111,22 +117,31 @@ void enterBottles(int width, int height)
         // -------------------------
         spawnTimer += dt;
 
-        if (spawnTimer >= 3.0f && bottleCount < 10)
+        if (spawnTimer >= spawnInterval && bottleCount < 100)
         {
             spawnTimer = 0.0f;
 
             // Find an inactive bottle slot
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 if (!bottles[i].active)
                 {
                     bottles[i].active = true;
-                    bottles[i].pos.x = (float)GetRandomValue(50, width - 50);
-                    bottles[i].pos.y = (float)GetRandomValue(50, height / 2); // top half
+                    bottles[i].pos.x = (float)GetRandomValue((int)leftX, (int)rightX);
+					int rand = GetRandomValue(1, 3);
+					if (rand == 1) bottles[i].pos.y = (height * 0.1f);
+					if (rand == 2) bottles[i].pos.y = (height * 0.2f);
+					if (rand == 3) bottles[i].pos.y = (height * 0.3f);
                     bottleCount++;
                     break;
                 }
             }
+
+			// Make next spawn faster
+			spawnInterval *= intervalDecay;
+			if (spawnInterval < minInterval)
+				spawnInterval = minInterval;
+
         }
 
         // -------------------------
@@ -136,7 +151,7 @@ void enterBottles(int width, int height)
 		{
 			if (!bullets[b].active) continue;
 
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				if (!bottles[i].active) continue;
 
@@ -170,15 +185,19 @@ void enterBottles(int width, int height)
         BeginDrawing();
         ClearBackground(WHITE);
 
+		// Environment
         DrawFPS(0, 0);
         DrawText("Bottles", width/2 - 50, height/2, 20, RED);
         DrawText(TextFormat("Score: %d", score), 20, 20, 30, DARKBLUE);
+		DrawRectangle((int)leftX, (int)(height * 0.1f), (int)barWidth, (int)barHeight, BROWN);
+		DrawRectangle((int)leftX, (int)(height * 0.2f), (int)barWidth, (int)barHeight, BROWN);
+		DrawRectangle((int)leftX, (int)(height * 0.3f), (int)barWidth, (int)barHeight, BROWN);
 
         // Player
         DrawCircleV(ballPosition, 50, MAROON);
 
         // Bottles
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 100; i++)
             if (bottles[i].active)
                 DrawRectangle((int)(bottles[i].pos.x) - 20, (int)bottles[i].pos.y - 30, 40, 60, BLUE);
 
