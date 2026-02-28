@@ -24,16 +24,16 @@ void enterBottles(int width, int height)
 	Vector2 ballVelocity = { 0, 0 };
 
 	const float ACCEL = 1200.0f;      // acceleration rate
-	const float MAX_SPEED = 300.0f;  // max movement speed
+	const float MAX_SPEED = 350.0f;  // max movement speed
 	const float FRICTION = 600.0f;   // how fast you slow down
-	const float BULLET_SPEED = 1800.0f;
+	const float BULLET_SPEED = 2400.0f;
 
 	// Bottle System
 	Bottle bottles[100] = {0};
     int bottleCount = 0;
     float spawnTimer = 0.0f;
 	float spawnInterval = 3.0f;      // starts at 3 seconds
-	float minInterval = 1.0f;        // never go faster than 0.5 seconds
+	float minInterval = 1.5f;
 	float intervalDecay = 0.90f;     // multiply interval by this each spawn
 
 	float barWidth = width * 0.75f;
@@ -43,6 +43,8 @@ void enterBottles(int width, int height)
 
 	// Bullet system
     Bullet bullets[20] = {0};
+	float shootCooldown = 0.0f;
+	float shootInterval = 0.5f;
 
     int score = 0;
 
@@ -86,18 +88,21 @@ void enterBottles(int width, int height)
 		// -------------------------
         // SHOOTING (UP ARROW)
         // -------------------------
-        if (IsKeyPressed(KEY_UP))
-        {
-            for (int i = 0; i < 20; i++)
-            {
-                if (!bullets[i].active)
-                {
-                    bullets[i].active = true;
-                    bullets[i].pos = ballPosition;
-                    bullets[i].speed = BULLET_SPEED;
-                    break;
-                }
-            }
+
+		shootCooldown += dt;
+
+        if (IsKeyPressed(KEY_UP) && shootCooldown >= shootInterval){
+
+    		shootCooldown = 0.0f;
+
+			for (int i = 0; i < 20; i++) {
+				if (!bullets[i].active) {
+					bullets[i].active = true;
+					bullets[i].pos = ballPosition;
+					bullets[i].speed = BULLET_SPEED;
+					break;
+				}
+			}
         }
 
 		// Update bullets
@@ -204,7 +209,7 @@ void enterBottles(int width, int height)
         // Bullets
         for (int i = 0; i < 20; i++)
             if (bullets[i].active)
-                DrawRectangle((int)bullets[i].pos.x - 3, (int)bullets[i].pos.y - 15, 6, 30, YELLOW);
+                DrawRectangle((int)bullets[i].pos.x - 3, (int)bullets[i].pos.y - 60, 6, 75, YELLOW);
 
         EndDrawing();
 
