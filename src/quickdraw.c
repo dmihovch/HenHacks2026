@@ -1,6 +1,8 @@
 #include "../include/quickdraw.h"
 #include <stdio.h>
 
+//hello
+
 
 void drawCrosshair(Crosshair xh)
 {
