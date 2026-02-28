@@ -7,6 +7,7 @@ typedef enum
 	MISS,
 	HIT,
 } LastShot;
+
 typedef struct {
     Vector2 pos;
     Vector2 vel;
@@ -30,4 +31,8 @@ typedef struct {
 
 
 void enterQuickdraw();
-
+void drawCrosshair(Crosshair xh);
+bool checkXhairOnTarget(Crosshair* xh, Target tg);
+void clampXhair(Crosshair* xh);
+int updateCrossHair(Crosshair* xh, float dt);
+LastShot checkShot(Crosshair xh, bool on_target);

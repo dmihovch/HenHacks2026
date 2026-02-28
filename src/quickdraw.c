@@ -1,4 +1,5 @@
 #include "../include/quickdraw.h"
+#include <stdio.h>
 
 
 void drawCrosshair(Crosshair xh)
@@ -37,16 +38,16 @@ void clampXhair(Crosshair* xh)
 int updateCrossHair(Crosshair* xh, float dt)
 {
 	
-	float accel = 2500.f;
-	float friction = 0.94f;
+	float accel = 100000.f;
+	float drag = 25.f;
 
 	if(IsKeyDown(xh->key_up)) xh->vel.y-= accel * dt;
 	if(IsKeyDown(xh->key_down)) xh->vel.y+= accel * dt;
 	if(IsKeyDown(xh->key_left)) xh->vel.x-= accel * dt;
 	if(IsKeyDown(xh->key_right)) xh->vel.x+= accel * dt;
 
-	xh->vel.x *= friction;
-	xh->vel.y *= friction;
+	xh->vel.x -= xh->vel.x * drag * dt;
+	xh->vel.y -= xh->vel.y * drag * dt;
 
 	xh->pos.x += xh->vel.x * dt;
 	xh->pos.y += xh->vel.y * dt;
@@ -59,12 +60,14 @@ int updateCrossHair(Crosshair* xh, float dt)
 
 LastShot checkShot(Crosshair xh, bool on_target)
 {
-	if(IsKeyPressed(xh.key_shoot))
+	if(IsMouseButtonPressed(xh.key_shoot))
 	{
 		if(on_target)
 		{
+			printf("HIT!\n");
 			return HIT;
 		}
+		printf("MISS!\n");
 		return MISS;
 	}
 	return NO_SHOT;
@@ -73,6 +76,7 @@ LastShot checkShot(Crosshair xh, bool on_target)
 void enterQuickdraw()
 {
 	
+
 	Crosshair p1xh = (Crosshair){
 		(Vector2){WIDTH*0.1, HEIGHT/2.},
 		(Vector2){0,0},
@@ -83,7 +87,7 @@ void enterQuickdraw()
 		.key_down = KEY_S,
 		.key_right = KEY_D,
 		.key_left = KEY_A,
-		.key_shoot = KEY_LEFT_SHIFT,
+		.key_shoot = MOUSE_LEFT_BUTTON,
 		.shot = NO_SHOT,
 		false,
 	};
@@ -95,11 +99,11 @@ void enterQuickdraw()
 		25,
 		5,
 		BLUE,
-		.key_up = KEY_O,
-		.key_down = KEY_L,
-		.key_right = KEY_SEMICOLON,
-		.key_left = KEY_K,
-		.key_shoot = KEY_RIGHT_SHIFT,
+		.key_up = KEY_UP,
+		.key_down = KEY_DOWN,
+		.key_right = KEY_RIGHT,
+		.key_left = KEY_LEFT,
+		.key_shoot = MOUSE_RIGHT_BUTTON,
 		.shot = NO_SHOT,
 		false,
 	};
@@ -144,6 +148,8 @@ void enterQuickdraw()
 		BeginDrawing();
 		DrawFPS(0,0);
 		ClearBackground(BLACK);
+		
+		
 
 		if(p1_ontarget)
 		{
