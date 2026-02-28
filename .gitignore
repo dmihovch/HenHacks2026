@@ -1,7 +1,15 @@
-# Prerequisites
+build/
+out/
+bin/
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.cache/
+compile_commands.json
 *.d
 
-# Object files
 *.o
 *.ko
 *.obj
