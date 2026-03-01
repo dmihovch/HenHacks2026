@@ -21,6 +21,21 @@ bool CollidesWithWalls(Vector2 pos, float radius, Rectangle *walls, int count) {
     return false;
 }
 
+bool CircleIntersectsRect(Vector2 pos, float radius, Rectangle rect) {
+    Rectangle player = { pos.x - radius, pos.y - radius, radius*2, radius*2 };
+    return CheckCollisionRecs(player, rect);
+}
+
+void DrawLabelWithHighlight(const char *text, float x, float y, int fontSize, Color textColor) {
+    int padding = 6;
+
+    int textWidth = MeasureText(text, fontSize);
+    int textHeight = fontSize;
+
+    DrawRectangle((int)(x - padding), (int)(y - padding), textWidth + padding*2, textHeight + padding*2, WHITE);
+    DrawText(text, (int)x, (int)y, fontSize, textColor);
+}
+
 
 int main(int argc, char** argv)
 {
@@ -60,10 +75,9 @@ int main(int argc, char** argv)
 	Rectangle quick_draw_select = { (float)width * 0.76f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.04f};
 	Rectangle platformers_select = { (float)width * 0.46f, (float)height * 0.70f, (float)width * 0.03f, (float)height * 0.12f};
 
-
-
 	Vector2 ballPosition = { (float)width/2, (float)height/2 };
 	Vector2 ballVelocity = { 0, 0 };
+	float r = 30.0f; // your player radius
 
 	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 300.0f;  // max movement speed
@@ -158,6 +172,7 @@ int main(int argc, char** argv)
 		}
 
 		BeginDrawing();
+		ClearBackground(BLACK);
 
 		// --- DRAW BACKGROUND FIRST ---
         DrawTexturePro(
@@ -180,22 +195,55 @@ int main(int argc, char** argv)
 		}
 
 		// Game Selector
-		DrawRectangleLinesEx(quick_draw_select, 3, BLACK);
-		DrawRectangleLinesEx(bottles_select, 3, BLACK);
-		DrawRectangleLinesEx(platformers_select, 3, BLACK);
-		
+		DrawRectangleRec(quick_draw_select, GOLD);
+		DrawRectangleLinesEx(quick_draw_select, 5, BLACK);
 
-		ClearBackground(BLACK);
-		DrawText("Town Lobby",WIDTH/2,HEIGHT/2,20,RED);
+		DrawRectangleRec(bottles_select, GOLD);
+		DrawRectangleLinesEx(bottles_select, 5, BLACK);
+
+		DrawRectangleRec(platformers_select, GOLD);
+		DrawRectangleLinesEx(platformers_select, 5, BLACK);
+
+		if (CircleIntersectsRect(ballPosition, r, quick_draw_select)) {
+			DrawLabelWithHighlight("Press E to enter Quick Draw",
+								quick_draw_select.x,
+								quick_draw_select.y - 30,
+								20,
+								BLACK);
+			if (IsKeyPressed(KEY_E)) {
+				enterQuickdraw();
+			}
+		}
+
+		if (CircleIntersectsRect(ballPosition, r, bottles_select)) {
+			DrawLabelWithHighlight("Press E to enter Bottles",
+								bottles_select.x,
+								bottles_select.y - 30,
+								20,
+								BLACK);
+			if (IsKeyPressed(KEY_E)) {
+				enterBottles(width, height);
+			}
+		}
+
+		if (CircleIntersectsRect(ballPosition, r, platformers_select)) {
+			DrawLabelWithHighlight("Press E to enter Platformer",
+								platformers_select.x,
+								platformers_select.y - 30,
+								20,
+								BLACK);
+			if (IsKeyPressed(KEY_E)) {
+				enterPlatformer();
+			}
+		}
+		
+		DrawLabelWithHighlight("Wild West", (int)width * 0.02f, (int)height * 0.02f, 20, BLACK);
 		DrawCircleV(ballPosition, 30, MAROON);
 
 		EndDrawing();
 
 	}
 
-
 	CloseWindow();
 	return 0;
-
-
 }
