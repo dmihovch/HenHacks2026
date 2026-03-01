@@ -6,6 +6,7 @@
 typedef struct Bottle {
 		Vector2 pos;
 		bool active;
+		float bottleBreak;
 } Bottle;
 
 typedef struct Bullet {
@@ -37,6 +38,8 @@ BottlesScore enterBottles(int width, int height)
 	float spawnInterval = 3.0f;      // starts at 3 seconds
 	float minInterval = 1.0f;
 	float intervalDecay = 0.90f;     // multiply interval by this each spawn
+
+	float bottleBreakInterval = 0.5f;
 
 	// Bullet system
     Bullet bullets[20] = {0};
@@ -248,7 +251,6 @@ BottlesScore enterBottles(int width, int height)
 					}
 				}
 			}
-
 		}
 
 
@@ -274,8 +276,11 @@ BottlesScore enterBottles(int width, int height)
 
         // Bottles
         for (int i = 0; i < 50; i++)
-            if (bottles[i].active)
-                DrawRectangle((int)(bottles[i].pos.x) - 20, (int)bottles[i].pos.y - 30, 40, 60, BLUE);
+            if (bottles[i].active) {
+                DrawRectangle((int)(bottles[i].pos.x) - 20, (int)bottles[i].pos.y - 30, 40, 60, BLUE); // < bottle not broke
+			} else if (bottles[i].bottleBreak <= bottleBreakInterval) {
+				DrawRectangle((int)(bottles[i].pos.x) - 20, (int)bottles[i].pos.y - 30, 40, 60, RED); // < bottle broke
+			}
 
         // Bullets
         for (int i = 0; i < 20; i++)
