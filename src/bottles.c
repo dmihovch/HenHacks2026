@@ -6,6 +6,7 @@
 typedef struct Bottle {
 		Vector2 pos;
 		bool active;
+		float bottleBreak;
 } Bottle;
 
 typedef struct Bullet {
@@ -19,6 +20,16 @@ typedef struct Bullet {
 
 BottlesScore enterBottles(int width, int height)
 {
+
+
+
+	Texture2D bg = LoadTexture("assets/bottle-background.png");
+	Texture2D ms = LoadTexture("assets/male-sheriff-removebg-preview.png");
+	Texture2D fs = LoadTexture("assets/new-sheriff-removebg-preview.png");
+	Texture2D bottle = LoadTexture("assets/bottle-bottle-removebg-preview.png");
+	Texture2D cracked = LoadTexture("assets/bottle-cracked-removebg-preview.png");
+
+
 	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 350.0f;  // max movement speed
 	const float FRICTION = 600.0f;   // how fast you slow down
@@ -38,6 +49,8 @@ BottlesScore enterBottles(int width, int height)
 	float minInterval = 1.0f;
 	float intervalDecay = 0.90f;     // multiply interval by this each spawn
 
+	float bottleBreakInterval = 0.5f;
+
 	// Bullet system
     Bullet bullets[20] = {0};
 	float shootCooldown1 = 0.0f;
@@ -56,8 +69,10 @@ BottlesScore enterBottles(int width, int height)
 
 	SetTargetFPS(60);
 
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
+
+		if (IsKeyPressed(KEY_Q)) break;
 
 		float dt = GetFrameTime();
 
@@ -186,7 +201,7 @@ BottlesScore enterBottles(int width, int height)
 			// -------------------------
 			spawnTimer += dt;
 
-			if (spawnTimer >= spawnInterval && bottleCount < 50)
+			if (spawnTimer >= spawnInterval)
 			{
 				spawnTimer = 0.0f;
 
@@ -242,13 +257,13 @@ BottlesScore enterBottles(int width, int height)
 					{
 						bullets[b].active = false;
 						bottles[i].active = false;
+						bottles[i].bottleBreak = 0.001f;
 						bottlesDestroyed++;
 						if (bullets[b].who == 1) score1++;
 						if (bullets[b].who == 2) score2++;
 					}
 				}
 			}
-
 		}
 
 
@@ -257,7 +272,10 @@ BottlesScore enterBottles(int width, int height)
         // -------------------------
         BeginDrawing();
         ClearBackground(WHITE);
-
+		DrawTexturePro(bg, 
+            (Rectangle){ 0, 0, (float)bg.width, (float)bg.height }, 
+            (Rectangle){ 0, 0, (float)width, (float)height }, 
+            (Vector2){ 0, 0 }, 0.0f, WHITE);
 		// Environment
         DrawFPS(0, 0);
         DrawText("Bottles", width/2 - 50, height/2, 20, RED);
@@ -267,17 +285,35 @@ BottlesScore enterBottles(int width, int height)
 		DrawRectangle((int)leftX, (int)(height * 0.2f), (int)barWidth, (int)barHeight, BROWN);
 		DrawRectangle((int)leftX, (int)(height * 0.3f), (int)barWidth, (int)barHeight, BROWN);
 
-        // Players
-        DrawCircleV(ballPosition1, 50, MAROON);
-		DrawCircleV(ballPosition2, 50, BLUE);
+        Rectangle p1Source = { 0, 0, (float)ms.width, (float)ms.height };
+        if (ballVelocity1.x < 0) p1Source.width *= -1; // Face left
+        DrawTexturePro(ms, p1Source, (Rectangle){ ballPosition1.x, ballPosition1.y, 100, 100 }, (Vector2){ 50, 50 }, 0.0f, WHITE);
+
+        Rectangle p2Source = { 0, 0, (float)fs.width, (float)fs.height };
+        if (ballVelocity2.x < 0) p2Source.width *= -1; // Face left
+        DrawTexturePro(fs, p2Source, (Rectangle){ ballPosition2.x, ballPosition2.y, 100, 100 }, (Vector2){ 50, 50 }, 0.0f, WHITE);
 
 
         // Bottles
-        for (int i = 0; i < 50; i++)
-            if (bottles[i].active)
-                DrawRectangle((int)(bottles[i].pos.x) - 20, (int)bottles[i].pos.y - 30, 40, 60, BLUE);
-
-        // Bullets
+    for (int i = 0; i < 50; i++) {
+            if (bottles[i].active) {
+                // Intact Bottle
+                DrawTexturePro(bottle, 
+                    (Rectangle){ 0, 0, (float)bottle.width, (float)bottle.height }, 
+                    (Rectangle){ bottles[i].pos.x, bottles[i].pos.y, 40, 60 }, 
+                    (Vector2){ 20, 30 }, 0.0f, WHITE);
+                    
+            } else if (bottles[i].bottleBreak > 0.0f && bottles[i].bottleBreak <= bottleBreakInterval) {
+                // Cracked Bottle
+                DrawTexturePro(cracked, 
+                    (Rectangle){ 0, 0, (float)cracked.width, (float)cracked.height }, 
+                    (Rectangle){ bottles[i].pos.x, bottles[i].pos.y, 40, 60 }, 
+                    (Vector2){ 20, 30 }, 0.0f, WHITE);
+                
+                // Increase the timer so the broken bottle eventually disappears!
+                if (!gameOver) bottles[i].bottleBreak += dt; 
+            }
+        }        // Bullets
         for (int i = 0; i < 20; i++)
             if (bullets[i].active)
                 DrawRectangle((int)bullets[i].pos.x - 3, (int)bullets[i].pos.y - 60, 6, 75, YELLOW);
@@ -309,5 +345,10 @@ BottlesScore enterBottles(int width, int height)
 
 	}
 
+	UnloadTexture(bg);
+	UnloadTexture(ms);
+	UnloadTexture(fs);
+	UnloadTexture(bottle);
+	UnloadTexture(cracked);
 	return (BottlesScore){score1,score2};
 }

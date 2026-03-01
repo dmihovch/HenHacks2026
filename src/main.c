@@ -67,6 +67,11 @@ int main(int argc, char** argv)
 	ToggleBorderlessWindowed();
 
 
+
+
+
+	Texture2D sheriffMaleTexture = LoadTexture("assets/male-sheriff-removebg-preview.png");
+	Texture2D sheriffFemaleTexture = LoadTexture("assets/new-sheriff-removebg-preview.png");
     Texture2D background = LoadTexture("assets/town.png");
 
     Rectangle q1 = { (float)WIDTH * 0.0f, (float)HEIGHT * 0.0f, (float)WIDTH * 0.44f, (float)HEIGHT * 0.39f};
@@ -105,9 +110,9 @@ int main(int argc, char** argv)
 	int player2_points = 0;
 
 	SetTargetFPS(60);
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
-
+		if (IsKeyPressed(KEY_Q)) break;
 		float dt = GetFrameTime();
 		int moveRight[2] = {KEY_D, KEY_RIGHT};
 		int moveLeft[2] = {KEY_A, KEY_LEFT};
@@ -190,6 +195,8 @@ int main(int argc, char** argv)
 		BeginDrawing();
 		ClearBackground(BLACK);
 
+		DrawFPS(0,0);
+
         DrawTexturePro(
             background,
             (Rectangle){0, 0, (float)background.width, (float)background.height},   // source
@@ -265,14 +272,28 @@ int main(int argc, char** argv)
 
         DrawLabelWithHighlight("Wild West", (int)WIDTH * 0.02f, (int)HEIGHT * 0.02f, 20, BLACK);
 
-        DrawCircleV(playersP[0], 30, MAROON);
-        DrawCircleV(playersP[1], 30, BLUE);
+		DrawLabelWithHighlight("Walk off to Exit", WIDTH * 0.44f, HEIGHT * 0.02f, 20, MAROON);
+        DrawLabelWithHighlight("Walk off to Exit", WIDTH * 0.44f, HEIGHT * 0.94f, 20, MAROON);
+		float spriteSize = r * 2.0f;
+        
+        Rectangle p1Source = { 0, 0, (float)sheriffMaleTexture.width, (float)sheriffMaleTexture.height };
+        Rectangle p1Dest = { playersP[0].x, playersP[0].y, spriteSize, spriteSize };
+        Vector2 origin = { r, r }; // Center the texture exactly on the coordinate
+        
+        DrawTexturePro(sheriffMaleTexture, p1Source, p1Dest, origin, 0.0f, WHITE);
+
+        Rectangle p2Source = { 0, 0, (float)sheriffFemaleTexture.width, (float)sheriffFemaleTexture.height };
+        Rectangle p2Dest = { playersP[1].x, playersP[1].y, spriteSize, spriteSize };
+        
+        DrawTexturePro(sheriffFemaleTexture, p2Source, p2Dest, origin, 0.0f, WHITE);
 
         drawScoreboard(player1_points, player2_points);
 
         EndDrawing();
 	}
   
+	UnloadTexture(sheriffFemaleTexture);
+	UnloadTexture(sheriffMaleTexture);
 	UnloadTexture(background);
 	CloseWindow();
 	return 0;

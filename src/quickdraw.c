@@ -95,8 +95,12 @@ QuickDrawWinner enterQuickdraw()
 	QuickDrawWinner wins = {0};
 	
 	
-	printf("in quickdraw\n");
+	Texture2D sheriffMaleTexture = LoadTexture("assets/male-sheriff-removebg-preview.png");
 
+	Texture2D sheriffFemaleTexture = LoadTexture("assets/new-sheriff-removebg-preview.png");
+	Texture2D targetTexture = LoadTexture("assets/target-removebg-preview.png");
+
+    Texture2D background = LoadTexture("assets/duel.png");
 	Crosshair p1xh = (Crosshair){
 		(Vector2){WIDTH*0.1, HEIGHT/2.},
 		(Vector2){0,0},
@@ -154,8 +158,9 @@ QuickDrawWinner enterQuickdraw()
 
 	bool p1_ontarget = false;
 	bool p2_ontarget = false;
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
+		if (IsKeyPressed(KEY_Q)) break; 
 		float dt = GetFrameTime();
 
 
@@ -254,9 +259,46 @@ QuickDrawWinner enterQuickdraw()
 		DrawFPS(0,0);
 		ClearBackground(BLACK);
 
+		DrawTexturePro(
+            background,
+            (Rectangle){0, 0, (float)background.width, (float)background.height},
+            (Rectangle){0, 0, (float)WIDTH, (float)HEIGHT},
+            (Vector2){0, 0},
+            0.0f,
+            WHITE
+        );
+		float sheriffHeight = 250.0f; 
+        float mWidth = (float)sheriffMaleTexture.width * (sheriffHeight / (float)sheriffMaleTexture.height);
+        Rectangle mSource = { 0, 0, (float)sheriffMaleTexture.width, (float)sheriffMaleTexture.height };
+        Rectangle mDest = { 50.0f, HEIGHT - sheriffHeight, mWidth, sheriffHeight };
+        DrawTexturePro(sheriffMaleTexture, mSource, mDest, (Vector2){0,0}, 0.0f, WHITE);
+
+        float fWidth = (float)sheriffFemaleTexture.width * (sheriffHeight / (float)sheriffFemaleTexture.height);
+        Rectangle fSource = { 0, 0, (float)sheriffFemaleTexture.width, (float)sheriffFemaleTexture.height };
+        fSource.width *= -1;
+        Rectangle fDest = { WIDTH - fWidth - 50.0f, HEIGHT - sheriffHeight, fWidth, sheriffHeight };
+        DrawTexturePro(sheriffFemaleTexture, fSource, fDest, (Vector2){0,0}, 0.0f, WHITE);
 
 		switch(game_state)
 		{
+			case GAMEPLAY:
+			{
+				float spriteSize = p1tg.radius * 2.0f; 
+				Rectangle targetSource = { 0, 0, (float)targetTexture.width, (float)targetTexture.height };
+				Vector2 targetOrigin = { p1tg.radius, p1tg.radius }; // Center the target
+
+				Color p2TargetTint = p1_ontarget ? GREEN : WHITE;
+				Rectangle target2Dest = { p2tg.pos.x, p2tg.pos.y, spriteSize, spriteSize };
+				DrawTexturePro(targetTexture, targetSource, target2Dest, targetOrigin, 0.0f, p2TargetTint);
+
+				Color p1TargetTint = p2_ontarget ? GREEN : WHITE;
+				Rectangle target1Dest = { p1tg.pos.x, p1tg.pos.y, spriteSize, spriteSize };
+				DrawTexturePro(targetTexture, targetSource, target1Dest, targetOrigin, 0.0f, p1TargetTint);
+
+				drawCrosshair(p1xh);
+				drawCrosshair(p2xh);
+				break;
+			}
 			case COUNTDOWN:
 			{
 				int font_size = 60;
@@ -278,28 +320,6 @@ QuickDrawWinner enterQuickdraw()
 				}
 				break;
 			}
-			case GAMEPLAY:
-				if(p1_ontarget)
-				{
-					DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,GREEN);
-				}
-				else
-				{
-					DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,p2tg.col);
-				}
-
-				if(p2_ontarget)
-				{
-					DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,GREEN);
-				}
-				else
-				{
-					DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,p1tg.col);
-				}
-
-				drawCrosshair(p1xh);
-				drawCrosshair(p2xh);
-				break;
 			case RESULT:
 			{
 
@@ -328,8 +348,8 @@ QuickDrawWinner enterQuickdraw()
                 int playWidth = MeasureText(playText, 20);
                 int exitWidth = MeasureText(exitText, 20);
 
-                DrawText(playText, (WIDTH / 2) - (playWidth / 2), (HEIGHT / 2) + 50, 20, LIGHTGRAY);
-                DrawText(exitText, (WIDTH / 2) - (exitWidth / 2), (HEIGHT / 2) + 80, 20, DARKGRAY);
+                DrawText(playText, (WIDTH / 2) - (playWidth / 2), (HEIGHT / 2) + 50, 20, BLACK);
+                DrawText(exitText, (WIDTH / 2) - (exitWidth / 2), (HEIGHT / 2) + 80, 20, BLACK);
 
 				break;
 			}
@@ -339,7 +359,10 @@ QuickDrawWinner enterQuickdraw()
 		EndDrawing();
 	}
 
-	printf("returning %d %d\n",wins.p1wins,wins.p2wins);
+	UnloadTexture(sheriffMaleTexture);
+	UnloadTexture(sheriffFemaleTexture);
+	UnloadTexture(background);
+	UnloadTexture(targetTexture);
 	return wins;
 
 
