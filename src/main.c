@@ -7,6 +7,7 @@
 #define QUICK_DRAW KEY_ONE
 #define BOTTLES KEY_TWO
 #define PLATFORMER KEY_THREE 
+
 int main(int argc, char** argv)
 {
 	SetRandomSeed((int)GetTime());
@@ -44,7 +45,6 @@ int main(int argc, char** argv)
 
 
 	SetTargetFPS(60);
-	int currentScene = 0;
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
 	{
 
@@ -94,7 +94,6 @@ int main(int argc, char** argv)
 		ballPosition.x += ballVelocity.x * dt;
 		ballPosition.y += ballVelocity.y * dt;
 
-		currentScene = GetKeyPressed();
 
 		if(IsKeyPressed(QUICK_DRAW))
 		{
@@ -134,7 +133,7 @@ int main(int argc, char** argv)
 
 	}
 
-
+	UnloadTexture(background);
 	CloseWindow();
 	return 0;
 

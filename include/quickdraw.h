@@ -1,5 +1,21 @@
 #include <raylib.h>
 #include "constants.h"
+#include <math.h>
+#define PLAYER_1_WIN 1
+#define PLAYER_2_WIN 2
+#define TIE 3
+
+typedef struct {
+	int p1wins;
+	int p2wins;
+}QuickDrawWinner;
+
+typedef enum
+{
+	COUNTDOWN,
+	GAMEPLAY,
+	RESULT,
+}QuickDrawState;
 
 typedef enum 
 {
@@ -30,7 +46,7 @@ typedef struct {
 } Target;
 
 
-void enterQuickdraw();
+QuickDrawWinner enterQuickdraw();
 void drawCrosshair(Crosshair xh);
 bool checkXhairOnTarget(Crosshair* xh, Target tg);
 void clampXhair(Crosshair* xh);
