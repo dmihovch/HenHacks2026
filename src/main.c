@@ -7,12 +7,30 @@
 #define QUICK_DRAW KEY_ONE
 #define BOTTLES KEY_TWO
 #define PLATFORMER KEY_THREE 
+
+#define CLEAR CLITERAL(Color){ 0, 0, 0, 0 }
+
+bool CollidesWithWalls(Vector2 pos, float radius, Rectangle *walls, int count) {
+    Rectangle player = { pos.x - radius, pos.y - radius, radius*2, radius*2 };
+
+    for (int i = 0; i < count; i++) {
+        if (CheckCollisionRecs(player, walls[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 int main(int argc, char** argv)
 {
 	SetRandomSeed((int)GetTime());
 
 	const int width = 1280;
 	const int height = 960;
+
+	// Hitboxes
+	const hitBoxes = false;
 
 	InitWindow(width,height,"Hackathon 2026");
 	if(!IsWindowReady())
@@ -24,19 +42,32 @@ int main(int argc, char** argv)
     // If you run from the project root (what VS Code usually does):
     Texture2D background = LoadTexture("assets/town.png");
 
-    Rectangle building1 = { (float)width * 0.12f, (float)height * 0.07f, (float)width * 0.32f, (float)height * 0.32f};
-	Rectangle building2 = { (float)width * 0.55f, (float)height * 0.08f, (float)width * 0.45f, (float)height * 0.35f};
-	Rectangle building3 = { (float)width * 0.18f, (float)height * 0.58f, (float)width * 0.27f, (float)height * 0.32f};
-	Rectangle building4 = { (float)width * 0.55f, (float)height * 0.58f, (float)width * 0.27f, (float)height * 0.32f};
+	// Bounds
+    Rectangle q1 = { (float)width * 0.0f, (float)height * 0.0f, (float)width * 0.44f, (float)height * 0.39f};
+	Rectangle q2 = { (float)width * 0.55f, (float)height * 0.0f, (float)width * 0.45f, (float)height * 0.43f};
+	Rectangle q3 = { (float)width * 0.0f, (float)height * 0.58f, (float)width * 0.45f, (float)height * 0.42f};
+	Rectangle q4 = { (float)width * 0.55f, (float)height * 0.58f, (float)width * 0.45f, (float)height * 0.42f};
+	Rectangle leftW = { (float)width * 0.0f, (float)height * 0.39f, (float)width * 0.10f, (float)height * 0.19f};
+	Rectangle rightW = { (float)width * 0.90f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.15f};
+	//Rectangle upW = { (float)width * 0.44f, (float)height * 0.0f, (float)width * 0.11f, (float)height * 0.05f};
+	//Rectangle downW = { (float)width * 0.45f, (float)height * 0.95f, (float)width * 0.10f, (float)height * 0.05f};
+	Rectangle weirdW = { (float)width * 0.78f, (float)height * 0.54f, (float)width * 0.12f, (float)height * 0.04f};
+	
+	Rectangle walls[] = { q1, q2, q3, q4, leftW, rightW, weirdW };
+	int wallCount = sizeof(walls) / sizeof(walls[0]);
+
+	Rectangle bottles_select = { (float)width * 0.23f, (float)height * 0.39f, (float)width * 0.10f, (float)height * 0.04f};
+	Rectangle quick_draw_select = { (float)width * 0.76f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.04f};
+	Rectangle platformers_select = { (float)width * 0.46f, (float)height * 0.70f, (float)width * 0.03f, (float)height * 0.12f};
 
 
 
 	Vector2 ballPosition = { (float)width/2, (float)height/2 };
 	Vector2 ballVelocity = { 0, 0 };
 
-	const float ACCEL = 800.0f;      // acceleration rate
+	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 300.0f;  // max movement speed
-	const float FRICTION = 600.0f;   // how fast you slow down
+	const float FRICTION = 800.0f;   // how fast you slow down
 
 
 	SetTargetFPS(60);
@@ -87,8 +118,29 @@ int main(int argc, char** argv)
 		}
 
 		// Apply velocity to position
-		ballPosition.x += ballVelocity.x * dt;
-		ballPosition.y += ballVelocity.y * dt;
+		float nextX = ballPosition.x + ballVelocity.x * dt;
+		float nextY = ballPosition.y + ballVelocity.y * dt;
+
+		// Try X movement
+		Vector2 tryX = { nextX, ballPosition.y };
+		if (!CollidesWithWalls(tryX, 30, walls, wallCount)) {
+			ballPosition.x = nextX;
+		} else {
+			ballVelocity.x = 0;
+		}
+
+		// Try Y movement
+		Vector2 tryY = { ballPosition.x, nextY };
+		if (!CollidesWithWalls(tryY, 30, walls, wallCount)) {
+			ballPosition.y = nextY;
+		} else {
+			ballVelocity.y = 0;
+		}
+
+		// out of bounds --> quit
+		if (ballPosition.y - 30 > height || ballPosition.y + 30 < 0) {
+			break;
+		}
 
 		currentScene = GetKeyPressed();
 
@@ -117,14 +169,25 @@ int main(int argc, char** argv)
             WHITE
         );
 
-		DrawRectangleLinesEx(building1, 3, RED);
-		DrawRectangleLinesEx(building2, 3, RED);
-		DrawRectangleLinesEx(building3, 3, RED);
-		DrawRectangleLinesEx(building4, 3, RED);
+		if (hitBoxes) {
+			for (int i = 0; i < wallCount; i++) {
+				DrawRectangleLinesEx(walls[i], 3, RED);
+			}
+		} else {
+			for (int i = 0; i < wallCount; i++) {
+				DrawRectangleLinesEx(walls[i], 3, CLEAR);
+			}
+		}
+
+		// Game Selector
+		DrawRectangleLinesEx(quick_draw_select, 3, BLACK);
+		DrawRectangleLinesEx(bottles_select, 3, BLACK);
+		DrawRectangleLinesEx(platformers_select, 3, BLACK);
+		
 
 		ClearBackground(BLACK);
 		DrawText("Town Lobby",WIDTH/2,HEIGHT/2,20,RED);
-		DrawCircleV(ballPosition, 50, MAROON);
+		DrawCircleV(ballPosition, 30, MAROON);
 
 		EndDrawing();
 
