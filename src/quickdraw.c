@@ -3,6 +3,7 @@
 
 
 
+
 void drawCrosshair(Crosshair xh)
 {
 	DrawRectangle(xh.pos.x - (xh.length / 2.0f), xh.pos.y - (xh.thickness / 2.0f), xh.length, xh.thickness, xh.col);
@@ -74,9 +75,12 @@ LastShot checkShot(Crosshair xh, bool on_target)
 	return NO_SHOT;
 }
 
-void enterQuickdraw()
+QuickDrawWinner enterQuickdraw()
 {
+	QuickDrawWinner wins = {0};
 	
+	
+	printf("in quickdraw\n");
 
 	Crosshair p1xh = (Crosshair){
 		(Vector2){WIDTH*0.1, HEIGHT/2.},
@@ -123,24 +127,90 @@ void enterQuickdraw()
 		BLUE,
 	};
 
+
+	int winner = 0;
+
+
+	float countdown = 3.;
+	bool round_start = true;
+
+	QuickDrawState game_state = COUNTDOWN;
+
+	bool p1_ontarget = false;
+	bool p2_ontarget = false;
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
 	{
-
-
 		float dt = GetFrameTime();
-		if(!p1xh.locked)
+
+
+		switch(game_state)
 		{
-			updateCrossHair(&p1xh,dt);
-		}
-		if(!p2xh.locked)
-		{
-			updateCrossHair(&p2xh,dt);
+			case COUNTDOWN:
+				countdown -= dt;
+				if(countdown < -0.25)
+				{
+					game_state = GAMEPLAY;
+				}
+				break;
+
+			case GAMEPLAY:
+				if(!p1xh.locked)
+				{
+					updateCrossHair(&p1xh,dt);
+				}
+				if(!p2xh.locked)
+				{
+					updateCrossHair(&p2xh,dt);
+				}
+
+				p1_ontarget = checkXhairOnTarget(&p1xh,p2tg);
+				p2_ontarget = checkXhairOnTarget(&p2xh,p1tg);
+				p1xh.shot = checkShot(p1xh,p1_ontarget);
+				p2xh.shot = checkShot(p2xh,p2_ontarget);
+
+				
+				if(p1xh.shot == HIT && p2xh.shot == HIT)
+				{
+					game_state = RESULT;
+					winner = TIE;
+					break;
+					//draw
+				}
+
+				if(p1xh.shot == HIT && p2xh.shot != HIT)
+				{
+					game_state = RESULT;
+					winner = PLAYER_1_WIN;
+					wins.p1wins++;
+					break;
+					//player 1 wins
+				}
+
+				if(p1xh.shot != HIT && p2xh.shot == HIT)
+				{
+					game_state = RESULT;
+					winner = PLAYER_2_WIN;
+					wins.p2wins++;
+					break;
+					//player 2 wins
+				}
+
+				break;
+			case RESULT:
+				if (IsKeyPressed(KEY_SPACE)) 
+                {
+                    countdown = 3.0f;
+                    p1xh.shot = NO_SHOT;
+                    p2xh.shot = NO_SHOT;
+
+                    p1xh.pos = (Vector2){WIDTH * 0.1, HEIGHT / 2.0};
+                    p2xh.pos = (Vector2){WIDTH * 0.9, HEIGHT / 2.0};
+                    
+                    game_state = COUNTDOWN;
+                }
+				break;
 		}
 
-		bool p1_ontarget = checkXhairOnTarget(&p1xh,p2tg);
-		bool p2_ontarget = checkXhairOnTarget(&p2xh,p1tg);
-		p1xh.shot = checkShot(p1xh,p1_ontarget);
-		p2xh.shot = checkShot(p2xh,p2_ontarget);
 
 		//need to penalize for a miss
 
@@ -148,27 +218,92 @@ void enterQuickdraw()
 		DrawFPS(0,0);
 		ClearBackground(BLACK);
 
-		if(p1_ontarget)
+
+		switch(game_state)
 		{
-			DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,GREEN);
-		}
-		else
-		{
-			DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,p2tg.col);
+			case COUNTDOWN:
+			{
+				int font_size = 60;
+				int text_width;
+				if(countdown <= 0 && countdown > -0.25)
+				{
+					const char* text = "DRAW!";
+					text_width = MeasureText(text, font_size);
+
+					DrawText(text, (WIDTH / 2) - (text_width / 2), (HEIGHT / 2) - (font_size / 2), font_size, GREEN);
+					break;
+				}
+				if(countdown > 0)
+				{
+					const char* text = TextFormat("%d", (int)ceil(countdown));
+					text_width = MeasureText(text, font_size);
+
+					DrawText(text, (WIDTH / 2) - (text_width / 2), (HEIGHT / 2) - (font_size / 2), font_size, RED);
+				}
+				break;
+			}
+			case GAMEPLAY:
+				if(p1_ontarget)
+				{
+					DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,GREEN);
+				}
+				else
+				{
+					DrawCircle(p2tg.pos.x,p2tg.pos.y,p2tg.radius,p2tg.col);
+				}
+
+				if(p2_ontarget)
+				{
+					DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,GREEN);
+				}
+				else
+				{
+					DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,p1tg.col);
+				}
+
+				drawCrosshair(p1xh);
+				drawCrosshair(p2xh);
+				break;
+			case RESULT:
+			{
+
+				const char* result_text = "TIE!";
+				Color result_color = WHITE;
+
+				if (winner == PLAYER_1_WIN) 
+				{
+					result_text = "Player 1 Wins!";
+					result_color = RED;
+				} 
+				else if (winner == PLAYER_2_WIN) 
+				{
+					result_text = "Player 2 Wins!";
+					result_color = BLUE;
+				}
+
+				int font_size = 60;
+				int textWidth = MeasureText(result_text, font_size);
+
+				DrawText(result_text, (WIDTH / 2) - (textWidth / 2), (HEIGHT / 2) - (font_size / 2), font_size, result_color);
+
+				const char* playText = "Press [SPACE] to Play Again";
+                const char* exitText = "Press [Q] or [ESC] to Exit";
+                
+                int playWidth = MeasureText(playText, 20);
+                int exitWidth = MeasureText(exitText, 20);
+
+                DrawText(playText, (WIDTH / 2) - (playWidth / 2), (HEIGHT / 2) + 50, 20, LIGHTGRAY);
+                DrawText(exitText, (WIDTH / 2) - (exitWidth / 2), (HEIGHT / 2) + 80, 20, DARKGRAY);
+
+				break;
+			}
 		}
 
-		if(p2_ontarget)
-		{
-			DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,GREEN);
-		}
-		else
-		{
-			DrawCircle(p1tg.pos.x,p1tg.pos.y,p1tg.radius,p1tg.col);
-		}
-
-		drawCrosshair(p1xh);
-		drawCrosshair(p2xh);
 
 		EndDrawing();
 	}
+
+	return wins;
+
+
 }
