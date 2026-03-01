@@ -287,11 +287,11 @@ BottlesScore enterBottles(int width, int height)
 
         Rectangle p1Source = { 0, 0, (float)ms.width, (float)ms.height };
         if (ballVelocity1.x < 0) p1Source.width *= -1; // Face left
-        DrawTexturePro(ms, p1Source, (Rectangle){ ballPosition1.x, ballPosition1.y, 100, 100 }, (Vector2){ 50, 50 }, 0.0f, WHITE);
+        DrawTexturePro(ms, p1Source, (Rectangle){ ballPosition1.x, ballPosition1.y, (float)width * 0.1f, (float)height * 0.15f }, (Vector2){ 50, 50 }, 0.0f, WHITE);
 
         Rectangle p2Source = { 0, 0, (float)fs.width, (float)fs.height };
         if (ballVelocity2.x < 0) p2Source.width *= -1; // Face left
-        DrawTexturePro(fs, p2Source, (Rectangle){ ballPosition2.x, ballPosition2.y, 100, 100 }, (Vector2){ 50, 50 }, 0.0f, WHITE);
+        DrawTexturePro(fs, p2Source, (Rectangle){ ballPosition2.x, ballPosition2.y, (float)width * 0.1f, (float)height * 0.15f }, (Vector2){ 50, 50 }, 0.0f, WHITE);
 
 
         // Bottles
