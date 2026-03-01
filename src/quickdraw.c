@@ -158,8 +158,9 @@ QuickDrawWinner enterQuickdraw()
 
 	bool p1_ontarget = false;
 	bool p2_ontarget = false;
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
+		if (IsKeyPressed(KEY_Q)) break; 
 		float dt = GetFrameTime();
 
 

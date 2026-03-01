@@ -110,9 +110,9 @@ int main(int argc, char** argv)
 	int player2_points = 0;
 
 	SetTargetFPS(60);
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
-
+		if (IsKeyPressed(KEY_Q)) break;
 		float dt = GetFrameTime();
 		int moveRight[2] = {KEY_D, KEY_RIGHT};
 		int moveLeft[2] = {KEY_A, KEY_LEFT};
@@ -271,6 +271,9 @@ int main(int argc, char** argv)
         DrawLabelWithHighlight("Platformer", platformers_select.x, platformers_select.y - 30, 20, BLACK);
 
         DrawLabelWithHighlight("Wild West", (int)WIDTH * 0.02f, (int)HEIGHT * 0.02f, 20, BLACK);
+
+		DrawLabelWithHighlight("Walk off to Exit", WIDTH * 0.44f, HEIGHT * 0.02f, 20, MAROON);
+        DrawLabelWithHighlight("Walk off to Exit", WIDTH * 0.44f, HEIGHT * 0.94f, 20, MAROON);
 		float spriteSize = r * 2.0f;
         
         Rectangle p1Source = { 0, 0, (float)sheriffMaleTexture.width, (float)sheriffMaleTexture.height };

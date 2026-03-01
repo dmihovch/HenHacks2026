@@ -69,8 +69,10 @@ BottlesScore enterBottles(int width, int height)
 
 	SetTargetFPS(60);
 
-	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
+	while(!WindowShouldClose())
 	{
+
+		if (IsKeyPressed(KEY_Q)) break;
 
 		float dt = GetFrameTime();
 
@@ -199,7 +201,7 @@ BottlesScore enterBottles(int width, int height)
 			// -------------------------
 			spawnTimer += dt;
 
-			if (spawnTimer >= spawnInterval && bottleCount < 50)
+			if (spawnTimer >= spawnInterval)
 			{
 				spawnTimer = 0.0f;
 
