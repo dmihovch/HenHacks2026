@@ -136,6 +136,10 @@ int enterPlatformer(void)
     srand((unsigned int)time(NULL));
     Texture2D background = LoadTexture("assets/mine.png"); 
 
+	Texture2D femaleSheriff = LoadTexture("assets/new-sheriff-removebg-preview.png");
+	Texture2D maleSheriff = LoadTexture("assets/male-sheriff-removebg-preview.png");
+	Texture2D bandit = LoadTexture("assets/new-bandit-removebg-preview.png");
+
     Platform platforms[PLATFORM_COUNT];
     Shooter shooters[PLATFORM_COUNT];
     Bullet bullets[MAX_BULLETS];
@@ -188,7 +192,7 @@ int enterPlatformer(void)
         }
 
         Rectangle topPlatform = platforms[PLATFORM_COUNT-1].rect;
-        
+
         bool win = (player1OnGround && player1Pos.y + PLAYER_HEIGHT == topPlatform.y) && 
                    (player2OnGround && player2Pos.y + PLAYER_HEIGHT == topPlatform.y);
 
@@ -287,6 +291,7 @@ int enterPlatformer(void)
 
         BeginDrawing();
         ClearBackground(BLACK);
+		DrawFPS(0,0);
         BeginMode2D(camera);
         
         float levelCeiling = platforms[PLATFORM_COUNT-1].rect.y - 1200; 
@@ -324,8 +329,14 @@ int enterPlatformer(void)
             }
 
             if (shooters[i].active) {
-                DrawRectangleRec(shooters[i].rect, PURPLE);
-                DrawRectangleLinesEx(shooters[i].rect, 2, WHITE);
+                Rectangle bSource = { 0, 0, (float)bandit.width, (float)bandit.height };
+                Rectangle bDest = shooters[i].rect;
+                
+                if (shooters[i].direction == -1) {
+                    bSource.width *= -1; 
+                }
+
+                DrawTexturePro(bandit, bSource, bDest, (Vector2){0, 0}, 0.0f, WHITE);
             }
         }
 
@@ -333,10 +344,18 @@ int enterPlatformer(void)
         for (int i = 0; i < MAX_PARTICLES; i++) if (particles[i].active) DrawCircleV(particles[i].pos, particles[i].radius, particles[i].color);
 
         if (!win) {
-            DrawRectangle((int)player1Pos.x, (int)player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, RED);
-            DrawRectangleLinesEx((Rectangle){player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT}, 2, WHITE);
-            DrawRectangle((int)player2Pos.x, (int)player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
-            DrawRectangleLinesEx((Rectangle){player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT}, 2, WHITE);
+            Rectangle p1Source = { 0, 0, (float)maleSheriff.width, (float)maleSheriff.height };
+            Rectangle p1Dest = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+            
+            if (player1Vel.x < 0) p1Source.width *= -1; 
+            
+            DrawTexturePro(maleSheriff, p1Source, p1Dest, (Vector2){0, 0}, 0.0f, WHITE);
+            Rectangle p2Source = { 0, 0, (float)femaleSheriff.width, (float)femaleSheriff.height };
+            Rectangle p2Dest = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+            
+            if (player2Vel.x < 0) p2Source.width *= -1;
+            
+            DrawTexturePro(femaleSheriff, p2Source, p2Dest, (Vector2){0, 0}, 0.0f, WHITE);
         }
         EndMode2D();
 
@@ -353,5 +372,8 @@ int enterPlatformer(void)
         EndDrawing();
     }
     UnloadTexture(background);
+	UnloadTexture(maleSheriff);
+	UnloadTexture(femaleSheriff);
+	UnloadTexture(bandit);
 	return total_wins;
 }
