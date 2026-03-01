@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <stdio.h>
 #include <math.h>
 #include "../include/platformer.h"
 #include "../include/bottles.h"
@@ -29,11 +30,23 @@ bool CircleIntersectsRect(Vector2 pos, float radius, Rectangle rect) {
 void DrawLabelWithHighlight(const char *text, float x, float y, int fontSize, Color textColor) {
     int padding = 6;
 
-    int textWidth = MeasureText(text, fontSize);
-    int textHeight = fontSize;
+    int textWIDTH = MeasureText(text, fontSize);
+    int textHEIGHT = fontSize;
 
-    DrawRectangle((int)(x - padding), (int)(y - padding), textWidth + padding*2, textHeight + padding*2, WHITE);
+    DrawRectangle((int)(x - padding), (int)(y - padding), textWIDTH + padding*2, textHEIGHT + padding*2, WHITE);
     DrawText(text, (int)x, (int)y, fontSize, textColor);
+}
+
+void drawScoreboard(int p1_score, int p2_score)
+{
+	int scoreFontSize = 30;
+	const char* scoreText = TextFormat("Player 1: %d   |   Player 2: %d", p1_score, p2_score);
+	int scoreWidth = MeasureText(scoreText, scoreFontSize);
+
+	float scoreX = (WIDTH / 2.0f) - (scoreWidth / 2.0f);
+	float scoreY = HEIGHT * 0.05f; 
+
+	DrawLabelWithHighlight(scoreText, scoreX, scoreY, scoreFontSize, BLACK);
 }
 
 
@@ -41,14 +54,12 @@ int main(int argc, char** argv)
 {
 	SetRandomSeed((int)GetTime());
 
-	const int width = 1280;
-	const int height = 960;
 
 	// Hitboxes
-	const hitBoxes = false;
+	const bool hitBoxes = false;
 	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
 
-	InitWindow(width,height,"Hackathon 2026");
+	InitWindow(WIDTH,HEIGHT,"Hackathon 2026");
 	if(!IsWindowReady())
 	{
 		return 1;
@@ -56,43 +67,42 @@ int main(int argc, char** argv)
 	ToggleBorderlessWindowed();
 
 
-	// --- LOAD BACKGROUND HERE ---
-    // If you run from the project root (what VS Code usually does):
     Texture2D background = LoadTexture("assets/town.png");
 
-	// Bounds
-    Rectangle q1 = { (float)width * 0.0f, (float)height * 0.0f, (float)width * 0.44f, (float)height * 0.39f};
-	Rectangle q2 = { (float)width * 0.55f, (float)height * 0.0f, (float)width * 0.45f, (float)height * 0.43f};
-	Rectangle q3 = { (float)width * 0.0f, (float)height * 0.58f, (float)width * 0.45f, (float)height * 0.42f};
-	Rectangle q4 = { (float)width * 0.55f, (float)height * 0.58f, (float)width * 0.45f, (float)height * 0.42f};
-	Rectangle leftW = { (float)width * 0.0f, (float)height * 0.39f, (float)width * 0.10f, (float)height * 0.19f};
-	Rectangle rightW = { (float)width * 0.90f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.15f};
-	//Rectangle upW = { (float)width * 0.44f, (float)height * 0.0f, (float)width * 0.11f, (float)height * 0.05f};
-	//Rectangle downW = { (float)width * 0.45f, (float)height * 0.95f, (float)width * 0.10f, (float)height * 0.05f};
-	Rectangle weirdW = { (float)width * 0.78f, (float)height * 0.54f, (float)width * 0.12f, (float)height * 0.04f};
+    Rectangle q1 = { (float)WIDTH * 0.0f, (float)HEIGHT * 0.0f, (float)WIDTH * 0.44f, (float)HEIGHT * 0.39f};
+	Rectangle q2 = { (float)WIDTH * 0.55f, (float)HEIGHT * 0.0f, (float)WIDTH * 0.45f, (float)HEIGHT * 0.43f};
+	Rectangle q3 = { (float)WIDTH * 0.0f, (float)HEIGHT * 0.58f, (float)WIDTH * 0.45f, (float)HEIGHT * 0.42f};
+	Rectangle q4 = { (float)WIDTH * 0.55f, (float)HEIGHT * 0.58f, (float)WIDTH * 0.45f, (float)HEIGHT * 0.42f};
+	Rectangle leftW = { (float)WIDTH * 0.0f, (float)HEIGHT * 0.39f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.19f};
+	Rectangle rightW = { (float)WIDTH * 0.90f, (float)HEIGHT * 0.43f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.15f};
+	//Rectangle upW = { (float)WIDTH * 0.44f, (float)HEIGHT * 0.0f, (float)WIDTH * 0.11f, (float)HEIGHT * 0.05f};
+	//Rectangle downW = { (float)WIDTH * 0.45f, (float)HEIGHT * 0.95f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.05f};
+	Rectangle weirdW = { (float)WIDTH * 0.78f, (float)HEIGHT * 0.54f, (float)WIDTH * 0.12f, (float)HEIGHT * 0.04f};
 	
 	Rectangle walls[] = { q1, q2, q3, q4, leftW, rightW, weirdW };
 	int wallCount = sizeof(walls) / sizeof(walls[0]);
 
-	Rectangle bottles_select = { (float)width * 0.23f, (float)height * 0.39f, (float)width * 0.10f, (float)height * 0.04f};
-	Rectangle quick_draw_select = { (float)width * 0.76f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.04f};
-	Rectangle platformers_select = { (float)width * 0.46f, (float)height * 0.70f, (float)width * 0.03f, (float)height * 0.12f};
+	Rectangle bottles_select = { (float)WIDTH * 0.23f, (float)HEIGHT * 0.39f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.04f};
+	Rectangle quick_draw_select = { (float)WIDTH * 0.76f, (float)HEIGHT * 0.43f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.04f};
+	Rectangle platformers_select = { (float)WIDTH * 0.46f, (float)HEIGHT * 0.70f, (float)WIDTH * 0.03f, (float)HEIGHT * 0.12f};
 
-	Vector2 ballPosition1 = { (float)width/2, (float)height/2 };
+	Vector2 ballPosition1 = { (float)WIDTH/2, (float)HEIGHT/2 };
 	Vector2 ballVelocity1 = { 0, 0 };
-	Vector2 ballPosition2 = { (float)width/2, (float)height/2 };
+	Vector2 ballPosition2 = { (float)WIDTH/2, (float)HEIGHT/2 };
 	Vector2 ballVelocity2 = { 0, 0 };
 	Vector2 playersP[] = {ballPosition1, ballPosition2};
 	Vector2 playersV[] = {ballVelocity1, ballVelocity2};
 	int playerCount = sizeof(playersP) / sizeof(playersP[0]);
 
-	float r = 30.0f; // your player radius
+	float r = 30.0f;
 	
 
-	const float ACCEL = 1200.0f;      // acceleration rate
-	const float MAX_SPEED = 300.0f;  // max movement speed
-	const float FRICTION = 800.0f;   // how fast you slow down
+	const float ACCEL = 1200.0f;
+	const float MAX_SPEED = 300.0f;
+	const float FRICTION = 800.0f;
 
+	int player1_points = 0;
+	int player2_points = 0;
 
 	SetTargetFPS(60);
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
@@ -167,7 +177,7 @@ int main(int argc, char** argv)
 			}
 
 			// out of bounds --> quit
-			if (playersP[i].y - 30 > height || playersP[i].y + 30 < 0) {
+			if (playersP[i].y - 30 > HEIGHT || playersP[i].y + 30 < 0) {
 				doBreak = true;
 			}
 		}
@@ -179,11 +189,14 @@ int main(int argc, char** argv)
 
 		if(IsKeyPressed(QUICK_DRAW))
 		{
-			enterQuickdraw();
+			QuickDrawWinner qdw = enterQuickdraw();
+			printf("qdw %d %d\n",qdw.p1wins, qdw.p2wins);
+			player1_points += qdw.p1wins;
+			player2_points += qdw.p2wins;
 		}
 		if(IsKeyPressed(BOTTLES))
 		{
-			enterBottles(width, height);
+			enterBottles(WIDTH, HEIGHT);
 		}
 		if(IsKeyPressed(PLATFORMER))
 		{
@@ -197,7 +210,7 @@ int main(int argc, char** argv)
         DrawTexturePro(
             background,
             (Rectangle){0, 0, (float)background.width, (float)background.height},   // source
-            (Rectangle){0, 0, (float)width, (float)height},                         // destination (fills window)
+            (Rectangle){0, 0, (float)WIDTH, (float)HEIGHT},                         // destination (fills window)
             (Vector2){0, 0},
             0.0f,
             WHITE
@@ -295,15 +308,17 @@ int main(int argc, char** argv)
 		// ---------------------------
 		if (IsKeyPressed(KEY_E)) {
 			if (p0Quick) enterQuickdraw();
-			if (p0Bottles) enterBottles(width, height);
+			if (p0Bottles) enterBottles(WIDTH, HEIGHT);
 			if (p0Plat) enterPlatformer();
 		}
 
 		
-		DrawLabelWithHighlight("Wild West", (int)width * 0.02f, (int)height * 0.02f, 20, BLACK);
+		DrawLabelWithHighlight("Wild West", (int)WIDTH * 0.02f, (int)HEIGHT * 0.02f, 20, BLACK);
 		DrawCircleV(playersP[0], 30, MAROON);
 		DrawCircleV(playersP[1], 30, BLUE);
-
+		
+		drawScoreboard(player1_points,player2_points);
+		
 		EndDrawing();
 
 	}

@@ -4,6 +4,7 @@
 #define PLAYER_1_WIN 1
 #define PLAYER_2_WIN 2
 #define TIE 3
+#define MAX_RELOAD_TIME 1.0f
 
 typedef struct {
 	int p1wins;
@@ -36,7 +37,8 @@ typedef struct {
     int key_right;
     int key_shoot;
 	LastShot shot;
-	bool locked;
+	bool reloading;
+	float reload_timer;
 } Crosshair;
 
 typedef struct {

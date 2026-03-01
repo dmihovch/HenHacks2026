@@ -6,6 +6,21 @@
 
 void drawCrosshair(Crosshair xh)
 {
+	Color xh_col = xh.col;
+
+	if(xh.reload_timer > 0.f)
+	{
+		xh_col = Fade(xh.col, 0.3f);
+
+		float reload_progress = 1.0f - (xh.reload_timer / MAX_RELOAD_TIME);
+
+		float inner_radius = (xh.length / 2.0f) + 4.0;
+		float outer_radius = (xh.length / 2.0f) + 8.0f;
+		DrawRing(xh.pos,inner_radius,outer_radius,0,360*reload_progress,32,Fade(xh.col, 0.8f));
+
+
+	}
+
 	DrawRectangle(xh.pos.x - (xh.length / 2.0f), xh.pos.y - (xh.thickness / 2.0f), xh.length, xh.thickness, xh.col);
 	DrawRectangle(xh.pos.x - (xh.thickness / 2.0f), xh.pos.y - (xh.length / 2.0f), xh.thickness, xh.length, xh.col);
 }
@@ -115,8 +130,9 @@ QuickDrawWinner enterQuickdraw()
 
 	float target_rad = 100.;
 
+	//needs to not clip into stuff
 	Target p1tg = (Target){
-		(Vector2){(float)GetRandomValue(0+target_rad,(WIDTH/2.)-target_rad),(float)GetRandomValue(0+target_rad,HEIGHT-target_rad)},
+		(Vector2){(float)GetRandomValue(target_rad,(WIDTH/2.)-target_rad),(float)GetRandomValue(target_rad,HEIGHT-target_rad)},
 		target_rad,
 		RED,
 	};
@@ -154,19 +170,36 @@ QuickDrawWinner enterQuickdraw()
 				break;
 
 			case GAMEPLAY:
-				if(!p1xh.locked)
-				{
-					updateCrossHair(&p1xh,dt);
-				}
-				if(!p2xh.locked)
-				{
-					updateCrossHair(&p2xh,dt);
-				}
+				updateCrossHair(&p1xh,dt);
+				updateCrossHair(&p2xh,dt);
 
 				p1_ontarget = checkXhairOnTarget(&p1xh,p2tg);
 				p2_ontarget = checkXhairOnTarget(&p2xh,p1tg);
-				p1xh.shot = checkShot(p1xh,p1_ontarget);
-				p2xh.shot = checkShot(p2xh,p2_ontarget);
+
+
+				if(p1xh.reload_timer <= 0.0f)
+				{
+					p1xh.shot = checkShot(p1xh,p1_ontarget);
+					if(p1xh.shot == MISS)
+					{
+						p1xh.reload_timer = MAX_RELOAD_TIME;
+					}
+				} else {
+					p1xh.reload_timer -= dt;
+					p1xh.shot = NO_SHOT;
+				}
+
+				if(p2xh.reload_timer <= 0.0f)
+				{
+					p2xh.shot = checkShot(p2xh,p2_ontarget);
+					if(p2xh.shot == MISS)
+					{
+						p2xh.reload_timer = MAX_RELOAD_TIME;
+					}
+				} else{
+					p2xh.reload_timer -= dt;
+					p2xh.shot = NO_SHOT;
+				}
 
 				
 				if(p1xh.shot == HIT && p2xh.shot == HIT)
@@ -200,12 +233,15 @@ QuickDrawWinner enterQuickdraw()
 				if (IsKeyPressed(KEY_SPACE)) 
                 {
                     countdown = 3.0f;
+
                     p1xh.shot = NO_SHOT;
                     p2xh.shot = NO_SHOT;
 
+					p1xh.reload_timer = 0.0f;
+					p2xh.reload_timer = 0.0f;
+
                     p1xh.pos = (Vector2){WIDTH * 0.1, HEIGHT / 2.0};
                     p2xh.pos = (Vector2){WIDTH * 0.9, HEIGHT / 2.0};
-                    
                     game_state = COUNTDOWN;
                 }
 				break;
@@ -288,7 +324,7 @@ QuickDrawWinner enterQuickdraw()
 
 				const char* playText = "Press [SPACE] to Play Again";
                 const char* exitText = "Press [Q] or [ESC] to Exit";
-                
+
                 int playWidth = MeasureText(playText, 20);
                 int exitWidth = MeasureText(exitText, 20);
 
@@ -303,6 +339,7 @@ QuickDrawWinner enterQuickdraw()
 		EndDrawing();
 	}
 
+	printf("returning %d %d\n",wins.p1wins,wins.p2wins);
 	return wins;
 
 
