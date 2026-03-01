@@ -348,8 +348,8 @@ QuickDrawWinner enterQuickdraw()
                 int playWidth = MeasureText(playText, 20);
                 int exitWidth = MeasureText(exitText, 20);
 
-                DrawText(playText, (WIDTH / 2) - (playWidth / 2), (HEIGHT / 2) + 50, 20, LIGHTGRAY);
-                DrawText(exitText, (WIDTH / 2) - (exitWidth / 2), (HEIGHT / 2) + 80, 20, DARKGRAY);
+                DrawText(playText, (WIDTH / 2) - (playWidth / 2), (HEIGHT / 2) + 50, 20, BLACK);
+                DrawText(exitText, (WIDTH / 2) - (exitWidth / 2), (HEIGHT / 2) + 80, 20, BLACK);
 
 				break;
 			}
