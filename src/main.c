@@ -75,9 +75,16 @@ int main(int argc, char** argv)
 	Rectangle quick_draw_select = { (float)width * 0.76f, (float)height * 0.43f, (float)width * 0.10f, (float)height * 0.04f};
 	Rectangle platformers_select = { (float)width * 0.46f, (float)height * 0.70f, (float)width * 0.03f, (float)height * 0.12f};
 
-	Vector2 ballPosition = { (float)width/2, (float)height/2 };
-	Vector2 ballVelocity = { 0, 0 };
+	Vector2 ballPosition1 = { (float)width/2, (float)height/2 };
+	Vector2 ballVelocity1 = { 0, 0 };
+	Vector2 ballPosition2 = { (float)width/2, (float)height/2 };
+	Vector2 ballVelocity2 = { 0, 0 };
+	Vector2 playersP[] = {ballPosition1, ballPosition2};
+	Vector2 playersV[] = {ballVelocity1, ballVelocity2};
+	int playerCount = sizeof(playersP) / sizeof(playersP[0]);
+
 	float r = 30.0f; // your player radius
+	
 
 	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 300.0f;  // max movement speed
@@ -90,69 +97,80 @@ int main(int argc, char** argv)
 	{
 
 		float dt = GetFrameTime();
+		int moveRight[2] = {KEY_D, KEY_RIGHT};
+		int moveLeft[2] = {KEY_A, KEY_LEFT};
+		int moveUp[2] = {KEY_W, KEY_UP};
+		int moveDown[2] = {KEY_S, KEY_DOWN};
+		bool doBreak = false;
 
-		// Accelerate on X axis
-		if (IsKeyDown(KEY_RIGHT)) {
-			ballVelocity.x += ACCEL * dt;
-		} else if (IsKeyDown(KEY_LEFT)) {
-			ballVelocity.x -= ACCEL * dt;
-		} else {
-			// Apply friction on X
-			if (ballVelocity.x > 0) {
-				ballVelocity.x -= FRICTION * dt;
-				if (ballVelocity.x < 0) ballVelocity.x = 0;
-			} else if (ballVelocity.x < 0) {
-				ballVelocity.x += FRICTION * dt;
-				if (ballVelocity.x > 0) ballVelocity.x = 0;
+		for (int i = 0; i < playerCount; i++) {
+			// Accelerate on X axis
+			if (IsKeyDown(moveRight[i])) {
+				playersV[i].x += ACCEL * dt;
+			} else if (IsKeyDown(moveLeft[i])) {
+				playersV[i].x -= ACCEL * dt;
+			} else {
+				// Apply friction on X
+				if (playersV[i].x > 0) {
+					playersV[i].x -= FRICTION * dt;
+					if (playersV[i].x < 0) playersV[i].x = 0;
+				} else if (playersV[i].x < 0) {
+					playersV[i].x += FRICTION * dt;
+					if (playersV[i].x > 0) playersV[i].x = 0;
+				}
+			}
+
+			// Accelerate on Y axis
+			if (IsKeyDown(moveDown[i])) {
+				playersV[i].y += ACCEL * dt;
+			} else if (IsKeyDown(moveUp[i])) {
+				playersV[i].y -= ACCEL * dt;
+			} else {
+				// Apply friction on Y
+				if (playersV[i].y > 0) {
+					playersV[i].y -= FRICTION * dt;
+					if (playersV[i].y < 0) playersV[i].y = 0;
+				} else if (playersV[i].y < 0) {
+					playersV[i].y += FRICTION * dt;
+					if (playersV[i].y > 0) playersV[i].y = 0;
+				}
+			}
+
+			// Clamp diagonal speed so diagonals aren't faster
+			float speed = sqrtf(playersV[i].x * playersV[i].x + playersV[i].y * playersV[i].y);
+			if (speed > MAX_SPEED) {
+				float scale = MAX_SPEED / speed;
+				playersV[i].x *= scale;
+				playersV[i].y *= scale;
+			}
+
+			// Apply velocity to position
+			float nextX = playersP[i].x + playersV[i].x * dt;
+			float nextY = playersP[i].y + playersV[i].y * dt;
+
+			// Try X movement
+			Vector2 tryX = { nextX, playersP[i].y };
+			if (!CollidesWithWalls(tryX, 30, walls, wallCount)) {
+				playersP[i].x = nextX;
+			} else {
+				playersV[i].x = 0;
+			}
+
+			// Try Y movement
+			Vector2 tryY = { playersP[i].x, nextY };
+			if (!CollidesWithWalls(tryY, 30, walls, wallCount)) {
+				playersP[i].y = nextY;
+			} else {
+				playersV[i].y = 0;
+			}
+
+			// out of bounds --> quit
+			if (playersP[i].y - 30 > height || playersP[i].y + 30 < 0) {
+				doBreak = true;
 			}
 		}
 
-		// Accelerate on Y axis
-		if (IsKeyDown(KEY_DOWN)) {
-			ballVelocity.y += ACCEL * dt;
-		} else if (IsKeyDown(KEY_UP)) {
-			ballVelocity.y -= ACCEL * dt;
-		} else {
-			// Apply friction on Y
-			if (ballVelocity.y > 0) {
-				ballVelocity.y -= FRICTION * dt;
-				if (ballVelocity.y < 0) ballVelocity.y = 0;
-			} else if (ballVelocity.y < 0) {
-				ballVelocity.y += FRICTION * dt;
-				if (ballVelocity.y > 0) ballVelocity.y = 0;
-			}
-		}
-
-		// Clamp diagonal speed so diagonals aren't faster
-		float speed = sqrtf(ballVelocity.x * ballVelocity.x + ballVelocity.y * ballVelocity.y);
-		if (speed > MAX_SPEED) {
-			float scale = MAX_SPEED / speed;
-			ballVelocity.x *= scale;
-			ballVelocity.y *= scale;
-		}
-
-		// Apply velocity to position
-		float nextX = ballPosition.x + ballVelocity.x * dt;
-		float nextY = ballPosition.y + ballVelocity.y * dt;
-
-		// Try X movement
-		Vector2 tryX = { nextX, ballPosition.y };
-		if (!CollidesWithWalls(tryX, 30, walls, wallCount)) {
-			ballPosition.x = nextX;
-		} else {
-			ballVelocity.x = 0;
-		}
-
-		// Try Y movement
-		Vector2 tryY = { ballPosition.x, nextY };
-		if (!CollidesWithWalls(tryY, 30, walls, wallCount)) {
-			ballPosition.y = nextY;
-		} else {
-			ballVelocity.y = 0;
-		}
-
-		// out of bounds --> quit
-		if (ballPosition.y - 30 > height || ballPosition.y + 30 < 0) {
+		if (doBreak) {
 			break;
 		}
 
@@ -203,42 +221,87 @@ int main(int argc, char** argv)
 
 		DrawRectangleRec(platformers_select, GOLD);
 		DrawRectangleLinesEx(platformers_select, 5, BLACK);
+		
+		
+		bool p0Quick = CircleIntersectsRect(playersP[0], r, quick_draw_select);
+		bool p1Quick = CircleIntersectsRect(playersP[1], r, quick_draw_select);
 
-		if (CircleIntersectsRect(ballPosition, r, quick_draw_select)) {
+		bool p0Bottles = CircleIntersectsRect(playersP[0], r, bottles_select);
+		bool p1Bottles = CircleIntersectsRect(playersP[1], r, bottles_select);
+
+		bool p0Plat = CircleIntersectsRect(playersP[0], r, platformers_select);
+		bool p1Plat = CircleIntersectsRect(playersP[1], r, platformers_select);
+
+
+		// ---------------------------
+		// FIRST: Player 1 labels (background)
+		// ---------------------------
+		if (p1Quick) {
+			DrawLabelWithHighlight("Quick Draw",
+								quick_draw_select.x,
+								quick_draw_select.y - 30,
+								20,
+								BLACK);
+		}
+
+		if (p1Bottles) {
+			DrawLabelWithHighlight("Bottles",
+								bottles_select.x,
+								bottles_select.y - 30,
+								20,
+								BLACK);
+		}
+
+		if (p1Plat) {
+			DrawLabelWithHighlight("Platformer",
+								platformers_select.x,
+								platformers_select.y - 30,
+								20,
+								BLACK);
+		}
+
+
+		// ---------------------------
+		// SECOND: Player 0 labels (foreground)
+		// ---------------------------
+		if (p0Quick) {
 			DrawLabelWithHighlight("Press E to enter Quick Draw",
 								quick_draw_select.x,
 								quick_draw_select.y - 30,
 								20,
 								BLACK);
-			if (IsKeyPressed(KEY_E)) {
-				enterQuickdraw();
-			}
 		}
 
-		if (CircleIntersectsRect(ballPosition, r, bottles_select)) {
+		if (p0Bottles) {
 			DrawLabelWithHighlight("Press E to enter Bottles",
 								bottles_select.x,
 								bottles_select.y - 30,
 								20,
 								BLACK);
-			if (IsKeyPressed(KEY_E)) {
-				enterBottles(width, height);
-			}
 		}
 
-		if (CircleIntersectsRect(ballPosition, r, platformers_select)) {
+		if (p0Plat) {
 			DrawLabelWithHighlight("Press E to enter Platformer",
 								platformers_select.x,
 								platformers_select.y - 30,
 								20,
 								BLACK);
-			if (IsKeyPressed(KEY_E)) {
-				enterPlatformer();
-			}
 		}
+
+
+		// ---------------------------
+		// E‑press functionality (player 0 only)
+		// ---------------------------
+		if (IsKeyPressed(KEY_E)) {
+			if (p0Quick) enterQuickdraw();
+			if (p0Bottles) enterBottles(width, height);
+			if (p0Plat) enterPlatformer();
+		}
+
 		
 		DrawLabelWithHighlight("Wild West", (int)width * 0.02f, (int)height * 0.02f, 20, BLACK);
-		DrawCircleV(ballPosition, 30, MAROON);
+		DrawCircleV(playersP[0], 30, MAROON);
+		DrawCircleV(playersP[1], 30, BLUE);
 
 		EndDrawing();
 
