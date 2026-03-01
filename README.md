@@ -7,7 +7,7 @@ Devon Weckherlen, Jack Mallett, Daniel Mihovch
 The program uses a CMakeList.txt file to help compile all of our .c files
 into 1 executable.
 
-## In the terminal type:
+## On Windows - In the terminal typ:
 - $> cmake -S . -B build
 - $> cmake --build build
 - $> .build/Debug/WildWestMG.exe
