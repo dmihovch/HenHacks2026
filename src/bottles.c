@@ -278,7 +278,6 @@ BottlesScore enterBottles(int width, int height)
             (Vector2){ 0, 0 }, 0.0f, WHITE);
 		// Environment
         DrawFPS(0, 0);
-        DrawText("Bottles", width/2 - 50, height/2, 20, RED);
         DrawText(TextFormat("Score: %d", score1), 20, 20, 30, MAROON);
 		DrawText(TextFormat("Score: %d", score2), width - 180, 20, 30, DARKBLUE);
 		DrawRectangle((int)leftX, (int)(height * 0.1f), (int)barWidth, (int)barHeight, BROWN);
