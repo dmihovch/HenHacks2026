@@ -7,12 +7,17 @@ Devon Weckherlen, Jack Mallett, Daniel Mihovch
 The program uses a CMakeList.txt file to help compile all of our .c files
 into 1 executable.
 
-## On Windows - In the terminal typ:
+## On Windows - In the terminal type:
 - $> cmake -S . -B build
 - $> cmake --build build
 - $> .build/Debug/WildWestMG.exe
 
 This sequence will create the build file and execute the game.
+
+## On Linux:
+- $ cmake -S . -B build
+- $ cmake --build build
+- $ ./build/WildWestMG
 
 # How to Play
 
