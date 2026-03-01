@@ -2,9 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 960
+#include "../include/constants.h"
 
 #define PLAYER_WIDTH 40
 #define PLAYER_HEIGHT 60
@@ -52,10 +50,12 @@ typedef struct {
 
 void GeneratePlatforms(Platform platforms[])
 {
-    float baseX = 400;
-    float baseY = 850;
+    float baseX = (float)WIDTH / 2.0f - PLATFORM_WIDTH / 2.0f;
+    float baseY = (float)HEIGHT - 110.0f; 
+    
     platforms[0].rect = (Rectangle){ baseX, baseY, PLATFORM_WIDTH, PLATFORM_HEIGHT };
     platforms[0].dropZone = (Rectangle){0,0,0,0};
+    
     float prevX = baseX;
     float prevY = baseY;
     float prevWidth = PLATFORM_WIDTH;
@@ -77,11 +77,12 @@ void GeneratePlatforms(Platform platforms[])
         }
 
         if (newX < 100) newX = 100;
-        if (newX + newWidth > 1180) newX = 1180 - newWidth;
+        if (newX + newWidth > WIDTH - 100) newX = (float)WIDTH - 100.0f - newWidth;
 
         float newY = prevY - VERTICAL_SPACING;
         platforms[i].rect = (Rectangle){ newX, newY, newWidth, PLATFORM_HEIGHT };
-        platforms[i].dropZone = (Rectangle){ newX + newWidth*0.4f, newY, newWidth*0.2f, PLATFORM_HEIGHT };
+        // The Drop Zone is the middle 30% of the platform
+        platforms[i].dropZone = (Rectangle){ newX + newWidth*0.35f, newY, newWidth*0.3f, PLATFORM_HEIGHT };
         prevX = newX;
         prevY = newY;
         prevWidth = newWidth;
@@ -152,7 +153,7 @@ void enterPlatformer(void)
 
     int score = 0;
     Camera2D camera = {0};
-    camera.offset = (Vector2){ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
+    camera.offset = (Vector2){ (float)WIDTH/2, (float)HEIGHT/2 };
     camera.zoom = 1.0f;
 
     float normalZoom = 1.0f, zoomedOut = 0.22f, zoomLerpSpeed = 0.05f;
@@ -180,9 +181,7 @@ void enterPlatformer(void)
         }
 
         Rectangle topPlatform = platforms[PLATFORM_COUNT-1].rect;
-        Rectangle player1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-        Rectangle player2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
-
+        
         bool win = (player1OnGround && player1Pos.y + PLAYER_HEIGHT == topPlatform.y) && 
                    (player2OnGround && player2Pos.y + PLAYER_HEIGHT == topPlatform.y);
 
@@ -201,21 +200,31 @@ void enterPlatformer(void)
             player1Pos.y += player1Vel.y; player2Pos.y += player2Vel.y;
             player1OnGround = player2OnGround = false;
 
+            Rectangle p1Rect = { player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+            Rectangle p2Rect = { player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT };
+
             for (int i = 0; i < PLATFORM_COUNT; i++)
             {
                 Rectangle plat = platforms[i].rect;
-                if (player1Vel.y > 0 && (prevY1 + PLAYER_HEIGHT) <= plat.y && (player1Pos.y + PLAYER_HEIGHT) >= plat.y && player1Pos.x + PLAYER_WIDTH > plat.x && player1Pos.x < plat.x + plat.width)
+                // P1 Collision
+                if (player1Vel.y > 0 && (prevY1 + PLAYER_HEIGHT) <= plat.y && (player1Pos.y + PLAYER_HEIGHT) >= plat.y && 
+                    player1Pos.x + PLAYER_WIDTH > plat.x && player1Pos.x < plat.x + plat.width)
                 {
-                    if (!(CheckCollisionRecs(player1Rect, platforms[i].dropZone) && IsKeyDown(KEY_S) && i != 0)) {
+                    // Check if player is NOT trying to drop through
+                    bool inDropZone = CheckCollisionRecs(p1Rect, platforms[i].dropZone);
+                    if (!(inDropZone && IsKeyDown(KEY_S) && i != 0)) {
                         player1Pos.y = plat.y - PLAYER_HEIGHT; player1Vel.y = 0; player1OnGround = true;
-                        int s = (int)((850 - plat.y) / VERTICAL_SPACING); if (s > score) score = s;
+                        int s = (int)((platforms[0].rect.y - plat.y) / VERTICAL_SPACING); if (s > score) score = s;
                     }
                 }
-                if (player2Vel.y > 0 && (prevY2 + PLAYER_HEIGHT) <= plat.y && (player2Pos.y + PLAYER_HEIGHT) >= plat.y && player2Pos.x + PLAYER_WIDTH > plat.x && player2Pos.x < plat.x + plat.width)
+                // P2 Collision
+                if (player2Vel.y > 0 && (prevY2 + PLAYER_HEIGHT) <= plat.y && (player2Pos.y + PLAYER_HEIGHT) >= plat.y && 
+                    player2Pos.x + PLAYER_WIDTH > plat.x && player2Pos.x < plat.x + plat.width)
                 {
-                    if (!(CheckCollisionRecs(player2Rect, platforms[i].dropZone) && IsKeyDown(KEY_DOWN) && i != 0)) {
+                    bool inDropZone = CheckCollisionRecs(p2Rect, platforms[i].dropZone);
+                    if (!(inDropZone && IsKeyDown(KEY_DOWN) && i != 0)) {
                         player2Pos.y = plat.y - PLAYER_HEIGHT; player2Vel.y = 0; player2OnGround = true;
-                        int s = (int)((850 - plat.y) / VERTICAL_SPACING); if (s > score) score = s;
+                        int s = (int)((platforms[0].rect.y - plat.y) / VERTICAL_SPACING); if (s > score) score = s;
                     }
                 }
             }
@@ -235,8 +244,9 @@ void enterPlatformer(void)
             for (int i = 0; i < MAX_BULLETS; i++) {
                 if (!bullets[i].active) continue;
                 bullets[i].pos.x += BULLET_SPEED * bullets[i].direction;
-                if (bullets[i].pos.x < -250 || bullets[i].pos.x > 1530) bullets[i].active = false;
-                else if (CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, player1Rect) || CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, player2Rect))
+                if (bullets[i].pos.x < -WIDTH/4 || bullets[i].pos.x > WIDTH + WIDTH/4) bullets[i].active = false;
+                else if (CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, p1Rect) || 
+                         CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, p2Rect))
                 {
                     GeneratePlatforms(platforms); RegenerateShooters(platforms, shooters);
                     for (int j = 0; j < MAX_BULLETS; j++) bullets[j].active = false;
@@ -254,7 +264,7 @@ void enterPlatformer(void)
 
         if (zoomToggled) {
             camera.zoom += (zoomedOut - camera.zoom) * zoomLerpSpeed;
-            camera.target.x += (640 - camera.target.x) * zoomLerpSpeed;
+            camera.target.x += ((float)WIDTH/2.0f - camera.target.x) * zoomLerpSpeed;
             camera.target.y += ((platforms[PLATFORM_COUNT-1].rect.y + platforms[0].rect.y)/2 - camera.target.y) * zoomLerpSpeed;
         } else {
             camera.zoom += (normalZoom - camera.zoom) * zoomLerpSpeed;
@@ -270,9 +280,9 @@ void enterPlatformer(void)
         float levelFloor = platforms[0].rect.y + 1200;              
         float tileWidth = 600.0f; 
         float tileHeight = (float)background.height * (tileWidth / (float)background.width); 
-        float centerX = 640.0f - (tileWidth / 2.0f);
+        float centerX = (float)WIDTH/2.0f - (tileWidth / 2.0f);
 
-        for (int h = -1; h <= 1; h++) 
+        for (int h = -2; h <= 2; h++) 
         {
             float currentColumnX = centerX + (h * tileWidth);
             for (float y = levelFloor; y > levelCeiling; y -= tileHeight) 
@@ -283,27 +293,20 @@ void enterPlatformer(void)
         }
 
         for (int i = 0; i < PLATFORM_COUNT; i++) {
-            // Main Platform Body
             if (i == 0) DrawRectangleRec(platforms[i].rect, BLACK);
             else if (i == PLATFORM_COUNT-1) DrawRectangleRec(platforms[i].rect, GOLD);
             else DrawRectangleRec(platforms[i].rect, DARKGRAY);
             
             DrawRectangleLinesEx(platforms[i].rect, 2, WHITE);
 
-            // CREATIVE DROP ZONE: Energy Phase Gate
             if (i != 0) {
                 Rectangle dz = platforms[i].dropZone;
-                // Draw a dark background for the gate
                 DrawRectangleRec(dz, (Color){20, 20, 20, 200});
-                
-                // Draw animated "energy" rungs
                 int pulse = (int)(155 + 100 * sin(winTextTimer * 4)); 
-                Color gateColor = (Color){ pulse, 50, 50, 255 }; // Pulsing reddish-pink
-                
+                Color gateColor = (Color){ pulse, 50, 50, 255 }; 
                 for (int j = 0; j < dz.height; j += 4) {
                     DrawLineEx((Vector2){dz.x, dz.y + j}, (Vector2){dz.x + dz.width, dz.y + j}, 1, gateColor);
                 }
-                // Border for the phase gate
                 DrawRectangleLinesEx(dz, 2, BLACK);
             }
 
@@ -319,7 +322,6 @@ void enterPlatformer(void)
         if (!win) {
             DrawRectangle((int)player1Pos.x, (int)player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, RED);
             DrawRectangleLinesEx((Rectangle){player1Pos.x, player1Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT}, 2, WHITE);
-            
             DrawRectangle((int)player2Pos.x, (int)player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, BLUE);
             DrawRectangleLinesEx((Rectangle){player2Pos.x, player2Pos.y, PLAYER_WIDTH, PLAYER_HEIGHT}, 2, WHITE);
         }
@@ -327,13 +329,13 @@ void enterPlatformer(void)
 
         if (win) {
             int floatOffset = (int)(10 * sin(winTextTimer));
-            DrawRectangle(0,0,SCREEN_WIDTH,SCREEN_HEIGHT,(Color){0,0,0,150});
-            DrawText("YOU WIN!", SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2 - 40 + floatOffset, 60, GOLD);
-            DrawText("Press R to Play Again or Q to Quit", SCREEN_WIDTH/2 - 220, SCREEN_HEIGHT/2 + 50 + floatOffset, 30, WHITE);
+            DrawRectangle(0,0,WIDTH,HEIGHT,(Color){0,0,0,150});
+            DrawText("YOU WIN!", WIDTH/2 - 120, HEIGHT/2 - 40 + floatOffset, 60, GOLD);
+            DrawText("Press R to Play Again or Q to Quit", WIDTH/2 - 220, HEIGHT/2 + 50 + floatOffset, 30, WHITE);
         }
 
-        DrawText(TextFormat("Score: %i", score), 20, 20, 20, WHITE);
-        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop | WASD: P1 | Arrows: P2 | K: Zoom Out", 20, 50, 20, WHITE);
+        DrawText(TextFormat("Score: %i", score), 20, 20, 30, WHITE);
+        DrawText("Q: Lobby | R: Respawn | S/DOWN: Drop | WASD: P1 | Arrows: P2 | K: Zoom Out", 20, 50, 30, WHITE);
         winTextTimer += 0.05f;
         EndDrawing();
     }
