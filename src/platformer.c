@@ -10,7 +10,7 @@
 #define JUMP_FORCE -17
 #define GRAVITY 0.8f
 
-#define PLATFORM_COUNT 30
+#define PLATFORM_COUNT 5
 #define PLATFORM_WIDTH 500
 #define PLATFORM_HEIGHT 20
 #define VERTICAL_SPACING 140
@@ -119,7 +119,7 @@ void SpawnJumpParticles(Particle particles[], Vector2 pos)
         if (!particles[i].active)
         {
             particles[i].active = true;
-            particles[i].pos = (Vector2){ pos.x + PLAYER_WIDTH/2, pos.y + PLAYER_HEIGHT };
+            particles[i].pos = (Vector2){ pos.x + PLAYER_WIDTH/2., pos.y + PLAYER_HEIGHT };
             particles[i].radius = (float)GetRandomValue(3,6);
             particles[i].velocity = (Vector2){ (float)GetRandomValue(-4,4), (float)GetRandomValue(-7,-2) };
             particles[i].color = (Color){ 200, 200, 200, 255 };
@@ -129,8 +129,10 @@ void SpawnJumpParticles(Particle particles[], Vector2 pos)
     }
 }
 
-void enterPlatformer(void)
+int enterPlatformer(void)
 {
+	
+
     srand((unsigned int)time(NULL));
     Texture2D background = LoadTexture("assets/mine.png"); 
 
@@ -145,13 +147,16 @@ void enterPlatformer(void)
     for (int i = 0; i < MAX_BULLETS; i++) bullets[i].active = false;
     for (int i = 0; i < MAX_PARTICLES; i++) particles[i].active = false;
 
-    Vector2 player1Pos = { platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2,
+    Vector2 player1Pos = { platforms[0].rect.x + PLATFORM_WIDTH/2. - PLAYER_WIDTH/2.,
                             platforms[0].rect.y - PLAYER_HEIGHT };
     Vector2 player2Pos = player1Pos;
     Vector2 player1Vel = {0,0}, player2Vel = {0,0};
     bool player1OnGround = true, player2OnGround = true;
 
     int score = 0;
+	int total_wins = 0;
+	bool already_won = false;
+
     Camera2D camera = {0};
     camera.offset = (Vector2){ (float)WIDTH/2, (float)HEIGHT/2 };
     camera.zoom = 1.0f;
@@ -172,18 +177,26 @@ void enterPlatformer(void)
             RegenerateShooters(platforms, shooters);
             for (int i = 0; i < MAX_BULLETS; i++) bullets[i].active = false;
             for (int i = 0; i < MAX_PARTICLES; i++) particles[i].active = false;
-            player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
+            player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2. - PLAYER_WIDTH/2.;
             player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
             player2Pos = player1Pos;
             player1Vel = player2Vel = (Vector2){0,0};
             player1OnGround = player2OnGround = true;
-            score = 0; winTextTimer = 0.0f;
+            score = 0; 
+			winTextTimer = 0.0f;
+			already_won = false;
         }
 
         Rectangle topPlatform = platforms[PLATFORM_COUNT-1].rect;
         
         bool win = (player1OnGround && player1Pos.y + PLAYER_HEIGHT == topPlatform.y) && 
                    (player2OnGround && player2Pos.y + PLAYER_HEIGHT == topPlatform.y);
+
+		if(win && !already_won)
+		{
+			total_wins++;
+			already_won = true;
+		}
 
         if (!win)
         {
@@ -244,15 +257,15 @@ void enterPlatformer(void)
             for (int i = 0; i < MAX_BULLETS; i++) {
                 if (!bullets[i].active) continue;
                 bullets[i].pos.x += BULLET_SPEED * bullets[i].direction;
-                if (bullets[i].pos.x < -WIDTH/4 || bullets[i].pos.x > WIDTH + WIDTH/4) bullets[i].active = false;
+                if (bullets[i].pos.x < -WIDTH/4. || bullets[i].pos.x > WIDTH + WIDTH/4.) bullets[i].active = false;
                 else if (CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, p1Rect) || 
                          CheckCollisionRecs((Rectangle){ bullets[i].pos.x - 5, bullets[i].pos.y - 5, 10, 10 }, p2Rect))
                 {
                     GeneratePlatforms(platforms); RegenerateShooters(platforms, shooters);
                     for (int j = 0; j < MAX_BULLETS; j++) bullets[j].active = false;
-                    player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2 - PLAYER_WIDTH/2;
+                    player1Pos.x = platforms[0].rect.x + PLATFORM_WIDTH/2. - PLAYER_WIDTH/2.;
                     player1Pos.y = platforms[0].rect.y - PLAYER_HEIGHT;
-                    player2Pos = player1Pos; player1Vel = player2Vel = (Vector2){0,0}; player1OnGround = player2OnGround = true; score = 0; break;
+                    player2Pos = player1Pos; player1Vel = player2Vel = (Vector2){0,0}; player1OnGround = player2OnGround = true; score = 0; already_won = false; break;
                 }
             }
         }
@@ -340,4 +353,5 @@ void enterPlatformer(void)
         EndDrawing();
     }
     UnloadTexture(background);
+	return total_wins;
 }

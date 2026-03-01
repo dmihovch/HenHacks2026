@@ -1,4 +1,8 @@
 #include <raylib.h>
 #include "constants.h"
+typedef struct {
+    int p1Score;
+    int p2Score;
+} BottlesScore;
 
-void enterBottles(int width, int height);
+BottlesScore enterBottles(int width, int height);

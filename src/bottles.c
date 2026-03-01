@@ -1,8 +1,7 @@
 #include <raylib.h>
 #include <math.h>
-#include "../include/platformer.h"
 #include "../include/bottles.h"
-#include "../include/quickdraw.h"
+
 
 typedef struct Bottle {
 		Vector2 pos;
@@ -18,7 +17,7 @@ typedef struct Bullet {
 
 
 
-void enterBottles(int width, int height)
+BottlesScore enterBottles(int width, int height)
 {
 	const float ACCEL = 1200.0f;      // acceleration rate
 	const float MAX_SPEED = 350.0f;  // max movement speed
@@ -33,6 +32,7 @@ void enterBottles(int width, int height)
 	// Bottle System
 	Bottle bottles[50] = {0};
     int bottleCount = 0;
+	int bottlesDestroyed = 0;
     float spawnTimer = 0.0f;
 	float spawnInterval = 3.0f;      // starts at 3 seconds
 	float minInterval = 1.0f;
@@ -52,6 +52,7 @@ void enterBottles(int width, int height)
 
     int score1 = 0;
 	int score2 = 0;
+	bool gameOver = false;
 
 	SetTargetFPS(60);
 
@@ -63,183 +64,191 @@ void enterBottles(int width, int height)
         // -------------------------
         // PLAYER 1 MOVEMENT
         // -------------------------
-
-		if (IsKeyDown(KEY_D)) {
-			ballVelocity1.x += ACCEL * dt;
-		} else if (IsKeyDown(KEY_A)) {
-			ballVelocity1.x -= ACCEL * dt;
-		} else {
-			if (ballVelocity1.x > 0) {
-				ballVelocity1.x -= FRICTION * dt;
-				if (ballVelocity1.x < 0) ballVelocity1.x = 0;
-			} else if (ballVelocity1.x < 0) {
-				ballVelocity1.x += FRICTION * dt;
-				if (ballVelocity1.x > 0) ballVelocity1.x = 0;
+		if(!gameOver)
+		{
+			if(bottlesDestroyed >= 15)
+			{
+				gameOver = true;
 			}
-		}
-
-		// Clamp speed
-		float speed1 = (float)fabs(ballVelocity1.x);
-		if (speed1 > MAX_SPEED) {
-			ballVelocity1.x = (ballVelocity1.x > 0 ? 1 : -1) * MAX_SPEED;
-		}
-
-		// Apply velocity
-		ballPosition1.x += ballVelocity1.x * dt;
-
-		// Keep inside screen
-		if (ballPosition1.x < 50) ballPosition1.x = 50;
-		if (ballPosition1.x > width - 50) ballPosition1.x = (float)width - 50;
-
-		// -------------------------
-        // PLAYER 2 MOVEMENT
-        // -------------------------
-
-		if (IsKeyDown(KEY_RIGHT)) {
-			ballVelocity2.x += ACCEL * dt;
-		} else if (IsKeyDown(KEY_LEFT)) {
-			ballVelocity2.x -= ACCEL * dt;
-		} else {
-			if (ballVelocity2.x > 0) {
-				ballVelocity2.x -= FRICTION * dt;
-				if (ballVelocity2.x < 0) ballVelocity2.x = 0;
-			} else if (ballVelocity2.x < 0) {
-				ballVelocity2.x += FRICTION * dt;
-				if (ballVelocity2.x > 0) ballVelocity2.x = 0;
-			}
-		}
-
-		// Clamp speed
-		float speed2 = (float)fabs(ballVelocity2.x);
-		if (speed2 > MAX_SPEED) {
-			ballVelocity2.x = (ballVelocity2.x > 0 ? 1 : -1) * MAX_SPEED;
-		}
-
-		// Apply velocity
-		ballPosition2.x += ballVelocity2.x * dt;
-
-		// Keep inside screen
-		if (ballPosition2.x < 50) ballPosition2.x = 50;
-		if (ballPosition2.x > width - 50) ballPosition2.x = (float)width - 50;
-
-
-		// -------------------------
-        // SHOOTING PLAYER 1
-        // -------------------------
-
-		shootCooldown1 += dt;
-
-		if (IsKeyPressed(KEY_W) && shootCooldown1 >= shootInterval){
-			shootCooldown1 = 0.0f;
-
-			for (int i = 0; i < 20; i++) {
-				if (!bullets[i].active) {
-					bullets[i].active = true;
-					bullets[i].pos = ballPosition1;
-					bullets[i].speed = BULLET_SPEED;
-					bullets[i].who = 1;
-					break;
+			if (IsKeyDown(KEY_D)) {
+				ballVelocity1.x += ACCEL * dt;
+			} else if (IsKeyDown(KEY_A)) {
+				ballVelocity1.x -= ACCEL * dt;
+			} else {
+				if (ballVelocity1.x > 0) {
+					ballVelocity1.x -= FRICTION * dt;
+					if (ballVelocity1.x < 0) ballVelocity1.x = 0;
+				} else if (ballVelocity1.x < 0) {
+					ballVelocity1.x += FRICTION * dt;
+					if (ballVelocity1.x > 0) ballVelocity1.x = 0;
 				}
 			}
-		}
 
-		// -------------------------
-        // SHOOTING PLAYER 2
-        // -------------------------
+			// Clamp speed
+			float speed1 = (float)fabs(ballVelocity1.x);
+			if (speed1 > MAX_SPEED) {
+				ballVelocity1.x = (ballVelocity1.x > 0 ? 1 : -1) * MAX_SPEED;
+			}
 
-		shootCooldown2 += dt;
+			// Apply velocity
+			ballPosition1.x += ballVelocity1.x * dt;
 
-		if (IsKeyPressed(KEY_UP) && shootCooldown2 >= shootInterval){
-			shootCooldown2 = 0.0f;
+			// Keep inside screen
+			if (ballPosition1.x < 50) ballPosition1.x = 50;
+			if (ballPosition1.x > width - 50) ballPosition1.x = (float)width - 50;
 
-			for (int i = 0; i < 20; i++) {
-				if (!bullets[i].active) {
-					bullets[i].active = true;
-					bullets[i].pos = ballPosition2;
-					bullets[i].speed = BULLET_SPEED;
-					bullets[i].who = 2;
-					break;
+			// -------------------------
+			// PLAYER 2 MOVEMENT
+			// -------------------------
+
+			if (IsKeyDown(KEY_RIGHT)) {
+				ballVelocity2.x += ACCEL * dt;
+			} else if (IsKeyDown(KEY_LEFT)) {
+				ballVelocity2.x -= ACCEL * dt;
+			} else {
+				if (ballVelocity2.x > 0) {
+					ballVelocity2.x -= FRICTION * dt;
+					if (ballVelocity2.x < 0) ballVelocity2.x = 0;
+				} else if (ballVelocity2.x < 0) {
+					ballVelocity2.x += FRICTION * dt;
+					if (ballVelocity2.x > 0) ballVelocity2.x = 0;
 				}
 			}
-		}
 
-		// Update Bullets
-		for (int i = 0; i < 20; i++)
-		{
-			if (bullets[i].active)
-			{
-				bullets[i].pos.y -= bullets[i].speed * dt;
-
-				if (bullets[i].pos.y < 0)
-					bullets[i].active = false;
+			// Clamp speed
+			float speed2 = (float)fabs(ballVelocity2.x);
+			if (speed2 > MAX_SPEED) {
+				ballVelocity2.x = (ballVelocity2.x > 0 ? 1 : -1) * MAX_SPEED;
 			}
-		}
 
-        // -------------------------
-        // BOTTLE SPAWNING
-        // -------------------------
-        spawnTimer += dt;
+			// Apply velocity
+			ballPosition2.x += ballVelocity2.x * dt;
 
-        if (spawnTimer >= spawnInterval && bottleCount < 50)
-        {
-            spawnTimer = 0.0f;
+			// Keep inside screen
+			if (ballPosition2.x < 50) ballPosition2.x = 50;
+			if (ballPosition2.x > width - 50) ballPosition2.x = (float)width - 50;
 
-            // Find an inactive bottle slot
-            for (int i = 0; i < 50; i++)
-            {
-                if (!bottles[i].active)
-                {
-                    bottles[i].active = true;
-                    bottles[i].pos.x = (float)GetRandomValue((int)leftX, (int)rightX);
-					int rand = GetRandomValue(1, 3);
-					if (rand == 1) bottles[i].pos.y = (height * 0.1f);
-					if (rand == 2) bottles[i].pos.y = (height * 0.2f);
-					if (rand == 3) bottles[i].pos.y = (height * 0.3f);
-                    bottleCount++;
-                    break;
-                }
-            }
 
-			// Make next spawn faster
-			spawnInterval *= intervalDecay;
-			if (spawnInterval < minInterval)
-				spawnInterval = minInterval;
+			// -------------------------
+			// SHOOTING PLAYER 1
+			// -------------------------
 
-        }
+			shootCooldown1 += dt;
 
-        // -------------------------
-        // BULLET–BOTTLE COLLISION
-        // -------------------------
-		for (int b = 0; b < 20; b++)
-		{
-			if (!bullets[b].active) continue;
+			if (IsKeyPressed(KEY_W) && shootCooldown1 >= shootInterval){
+				shootCooldown1 = 0.0f;
 
-			for (int i = 0; i < 50; i++)
+				for (int i = 0; i < 20; i++) {
+					if (!bullets[i].active) {
+						bullets[i].active = true;
+						bullets[i].pos = ballPosition1;
+						bullets[i].speed = BULLET_SPEED;
+						bullets[i].who = 1;
+						break;
+					}
+				}
+			}
+
+			// -------------------------
+			// SHOOTING PLAYER 2
+			// -------------------------
+
+			shootCooldown2 += dt;
+
+			if (IsKeyPressed(KEY_UP) && shootCooldown2 >= shootInterval){
+				shootCooldown2 = 0.0f;
+
+				for (int i = 0; i < 20; i++) {
+					if (!bullets[i].active) {
+						bullets[i].active = true;
+						bullets[i].pos = ballPosition2;
+						bullets[i].speed = BULLET_SPEED;
+						bullets[i].who = 2;
+						break;
+					}
+				}
+			}
+
+			// Update Bullets
+			for (int i = 0; i < 20; i++)
 			{
-				if (!bottles[i].active) continue;
-
-				Rectangle bulletRect = {
-					bullets[b].pos.x - 3,
-					bullets[b].pos.y - 15,
-					6,
-					30
-				};
-
-				Rectangle bottleRect = {
-					bottles[i].pos.x - 20,
-					bottles[i].pos.y - 30,
-					40,
-					60
-				};
-
-				if (CheckCollisionRecs(bulletRect, bottleRect))
+				if (bullets[i].active)
 				{
-					bullets[b].active = false;
-					bottles[i].active = false;
-					if (bullets[b].who == 1) score1++;
-					if (bullets[b].who == 2) score2++;
+					bullets[i].pos.y -= bullets[i].speed * dt;
+
+					if (bullets[i].pos.y < 0)
+						bullets[i].active = false;
 				}
 			}
+
+			// -------------------------
+			// BOTTLE SPAWNING
+			// -------------------------
+			spawnTimer += dt;
+
+			if (spawnTimer >= spawnInterval && bottleCount < 50)
+			{
+				spawnTimer = 0.0f;
+
+				// Find an inactive bottle slot
+				for (int i = 0; i < 50; i++)
+				{
+					if (!bottles[i].active)
+					{
+						bottles[i].active = true;
+						bottles[i].pos.x = (float)GetRandomValue((int)leftX, (int)rightX);
+						int rand = GetRandomValue(1, 3);
+						if (rand == 1) bottles[i].pos.y = (height * 0.1f);
+						if (rand == 2) bottles[i].pos.y = (height * 0.2f);
+						if (rand == 3) bottles[i].pos.y = (height * 0.3f);
+						bottleCount++;
+						break;
+					}
+				}
+
+				// Make next spawn faster
+				spawnInterval *= intervalDecay;
+				if (spawnInterval < minInterval)
+					spawnInterval = minInterval;
+
+			}
+
+			// -------------------------
+			// BULLET–BOTTLE COLLISION
+			// -------------------------
+			for (int b = 0; b < 20; b++)
+			{
+				if (!bullets[b].active) continue;
+
+				for (int i = 0; i < 50; i++)
+				{
+					if (!bottles[i].active) continue;
+
+					Rectangle bulletRect = {
+						bullets[b].pos.x - 3,
+						bullets[b].pos.y - 15,
+						6,
+						30
+					};
+
+					Rectangle bottleRect = {
+						bottles[i].pos.x - 20,
+						bottles[i].pos.y - 30,
+						40,
+						60
+					};
+
+					if (CheckCollisionRecs(bulletRect, bottleRect))
+					{
+						bullets[b].active = false;
+						bottles[i].active = false;
+						bottlesDestroyed++;
+						if (bullets[b].who == 1) score1++;
+						if (bullets[b].who == 2) score2++;
+					}
+				}
+			}
+
 		}
 
 
@@ -273,7 +282,32 @@ void enterBottles(int width, int height)
             if (bullets[i].active)
                 DrawRectangle((int)bullets[i].pos.x - 3, (int)bullets[i].pos.y - 60, 6, 75, YELLOW);
 
+        if (gameOver)
+        {
+            DrawRectangle(0, 0, width, height, (Color){ 0, 0, 0, 150 });
+            
+            const char* resultText = "It's a Tie!";
+            Color resultColor = GRAY;
+            if (score1 > score2) {
+                resultText = "Player 1 Wins!";
+                resultColor = RED;
+            } else if (score2 > score1) {
+                resultText = "Player 2 Wins!";
+                resultColor = BLUE;
+            }
+
+            int font1 = 60;
+            int font2 = 40;
+            int font3 = 30;
+
+            DrawText(resultText, width/2 - MeasureText(resultText, font1)/2, height/2 - 60, font1, resultColor);
+            DrawText("GAME OVER!", width/2 - MeasureText("GAME OVER!", font2)/2, height/2 + 20, font2, GOLD);
+            DrawText("Press [q] to return to town", width/2 - MeasureText("Press [q] to return to town", font3)/2, height/2 + 80, font3, WHITE);
+        }
+
         EndDrawing();
 
 	}
+
+	return (BottlesScore){score1,score2};
 }
