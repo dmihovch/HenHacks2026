@@ -4,6 +4,10 @@ Devon Weckherlen, Jack Mallett, Daniel Mihovch
 
 ## How to Run
 
+## Download the Source Files:
+- $ git clone git@github.com:dmihovch/HenHacks2026.git
+- $ cd HenHacks2026
+
 The program uses a CMakeList.txt file to help compile all of our .c files
 into 1 executable.
 
