@@ -86,9 +86,9 @@ int main(int argc, char** argv)
 	Rectangle quick_draw_select = { (float)WIDTH * 0.76f, (float)HEIGHT * 0.43f, (float)WIDTH * 0.10f, (float)HEIGHT * 0.04f};
 	Rectangle platformers_select = { (float)WIDTH * 0.46f, (float)HEIGHT * 0.70f, (float)WIDTH * 0.03f, (float)HEIGHT * 0.12f};
 
-	Vector2 ballPosition1 = { (float)WIDTH/2, (float)HEIGHT/2 };
+	Vector2 ballPosition1 = { (float)WIDTH/2 - WIDTH*0.05, (float)HEIGHT/2 };
 	Vector2 ballVelocity1 = { 0, 0 };
-	Vector2 ballPosition2 = { (float)WIDTH/2, (float)HEIGHT/2 };
+	Vector2 ballPosition2 = { (float)WIDTH/2 + WIDTH*0.05, (float)HEIGHT/2 };
 	Vector2 ballVelocity2 = { 0, 0 };
 	Vector2 playersP[] = {ballPosition1, ballPosition2};
 	Vector2 playersV[] = {ballVelocity1, ballVelocity2};
@@ -187,26 +187,9 @@ int main(int argc, char** argv)
 		}
 
 
-		if(IsKeyPressed(QUICK_DRAW))
-		{
-			QuickDrawWinner qdw = enterQuickdraw();
-			printf("qdw %d %d\n",qdw.p1wins, qdw.p2wins);
-			player1_points += qdw.p1wins;
-			player2_points += qdw.p2wins;
-		}
-		if(IsKeyPressed(BOTTLES))
-		{
-			enterBottles(WIDTH, HEIGHT);
-		}
-		if(IsKeyPressed(PLATFORMER))
-		{
-			enterPlatformer();
-		}
-
 		BeginDrawing();
 		ClearBackground(BLACK);
 
-		// --- DRAW BACKGROUND FIRST ---
         DrawTexturePro(
             background,
             (Rectangle){0, 0, (float)background.width, (float)background.height},   // source
@@ -236,91 +219,58 @@ int main(int argc, char** argv)
 		DrawRectangleRec(platformers_select, GOLD);
 		DrawRectangleLinesEx(platformers_select, 5, BLACK);
 		
-		
 		bool p0Quick = CircleIntersectsRect(playersP[0], r, quick_draw_select);
-		bool p1Quick = CircleIntersectsRect(playersP[1], r, quick_draw_select);
+        bool p1Quick = CircleIntersectsRect(playersP[1], r, quick_draw_select);
 
-		bool p0Bottles = CircleIntersectsRect(playersP[0], r, bottles_select);
-		bool p1Bottles = CircleIntersectsRect(playersP[1], r, bottles_select);
+        bool p0Bottles = CircleIntersectsRect(playersP[0], r, bottles_select);
+        bool p1Bottles = CircleIntersectsRect(playersP[1], r, bottles_select);
 
-		bool p0Plat = CircleIntersectsRect(playersP[0], r, platformers_select);
-		bool p1Plat = CircleIntersectsRect(playersP[1], r, platformers_select);
+        bool p0Plat = CircleIntersectsRect(playersP[0], r, platformers_select);
+        bool p1Plat = CircleIntersectsRect(playersP[1], r, platformers_select);
 
+        if (p0Quick && p1Quick) {
+            QuickDrawWinner qdw = enterQuickdraw();
+            player1_points += qdw.p1wins;
+            player2_points += qdw.p2wins;
+            
+            playersP[0] = ballPosition1; 
+            playersP[1] = ballPosition2;
+            playersV[0] = (Vector2){0,0};
+            playersV[1] = (Vector2){0,0};
+        }
 
-		// ---------------------------
-		// FIRST: Player 1 labels (background)
-		// ---------------------------
-		if (p1Quick) {
-			DrawLabelWithHighlight("Quick Draw",
-								quick_draw_select.x,
-								quick_draw_select.y - 30,
-								20,
-								BLACK);
-		}
+        if (p0Bottles && p1Bottles) {
+            BottlesScore bs = enterBottles(WIDTH, HEIGHT);
+			player1_points += bs.p1Score;
+			player2_points += bs.p2Score;
+            playersP[0] = ballPosition1; 
+            playersP[1] = ballPosition2;
+            playersV[0] = (Vector2){0,0};
+            playersV[1] = (Vector2){0,0};
+        }
 
-		if (p1Bottles) {
-			DrawLabelWithHighlight("Bottles",
-								bottles_select.x,
-								bottles_select.y - 30,
-								20,
-								BLACK);
-		}
+        if (p0Plat && p1Plat) {
+            int points = enterPlatformer();
+			player1_points += points;
+			player2_points += points;
+            playersP[0] = ballPosition1; 
+            playersP[1] = ballPosition2;
+            playersV[0] = (Vector2){0,0};
+            playersV[1] = (Vector2){0,0};
+        }
 
-		if (p1Plat) {
-			DrawLabelWithHighlight("Platformer",
-								platformers_select.x,
-								platformers_select.y - 30,
-								20,
-								BLACK);
-		}
+        DrawLabelWithHighlight("Quick Draw", quick_draw_select.x, quick_draw_select.y - 30, 20, BLACK);
+        DrawLabelWithHighlight("Bottles", bottles_select.x, bottles_select.y - 30, 20, BLACK);
+        DrawLabelWithHighlight("Platformer", platformers_select.x, platformers_select.y - 30, 20, BLACK);
 
+        DrawLabelWithHighlight("Wild West", (int)WIDTH * 0.02f, (int)HEIGHT * 0.02f, 20, BLACK);
 
-		// ---------------------------
-		// SECOND: Player 0 labels (foreground)
-		// ---------------------------
-		if (p0Quick) {
-			DrawLabelWithHighlight("Press E to enter Quick Draw",
-								quick_draw_select.x,
-								quick_draw_select.y - 30,
-								20,
-								BLACK);
-		}
+        DrawCircleV(playersP[0], 30, MAROON);
+        DrawCircleV(playersP[1], 30, BLUE);
 
-		if (p0Bottles) {
-			DrawLabelWithHighlight("Press E to enter Bottles",
-								bottles_select.x,
-								bottles_select.y - 30,
-								20,
-								BLACK);
-		}
+        drawScoreboard(player1_points, player2_points);
 
-		if (p0Plat) {
-			DrawLabelWithHighlight("Press E to enter Platformer",
-								platformers_select.x,
-								platformers_select.y - 30,
-								20,
-								BLACK);
-		}
-
-
-		// ---------------------------
-		// E‑press functionality (player 0 only)
-		// ---------------------------
-		if (IsKeyPressed(KEY_E)) {
-			if (p0Quick) enterQuickdraw();
-			if (p0Bottles) enterBottles(WIDTH, HEIGHT);
-			if (p0Plat) enterPlatformer();
-		}
-
-		
-		DrawLabelWithHighlight("Wild West", (int)WIDTH * 0.02f, (int)HEIGHT * 0.02f, 20, BLACK);
-		DrawCircleV(playersP[0], 30, MAROON);
-		DrawCircleV(playersP[1], 30, BLUE);
-		
-		drawScoreboard(player1_points,player2_points);
-		
-		EndDrawing();
-
+        EndDrawing();
 	}
   
 	UnloadTexture(background);
