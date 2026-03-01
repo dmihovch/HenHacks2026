@@ -4,13 +4,13 @@
 #include <math.h>
 #include "../include/constants.h"
 
-#define PLAYER_WIDTH 40
-#define PLAYER_HEIGHT 60
+#define PLAYER_WIDTH 60
+#define PLAYER_HEIGHT 90
 #define PLAYER_SPEED 6
 #define JUMP_FORCE -17
 #define GRAVITY 0.8f
 
-#define PLATFORM_COUNT 5
+#define PLATFORM_COUNT 10
 #define PLATFORM_WIDTH 500
 #define PLATFORM_HEIGHT 20
 #define VERTICAL_SPACING 140
@@ -96,16 +96,21 @@ void RegenerateShooters(Platform platforms[], Shooter shooters[])
         shooters[i].active = false;
         shooters[i].shootTimer = 0;
         if (i == 0) continue;
+        
         float spawnChance = (float)i / PLATFORM_COUNT;
         if (GetRandomValue(0,100) < spawnChance*100)
         {
             shooters[i].active = true;
             Rectangle p = platforms[i].rect;
+            
+            float sWidth = 40.0f; 
+            float sHeight = 80.0f;
+
             if (GetRandomValue(0,1) == 0) {
-                shooters[i].rect = (Rectangle){ p.x - 20, p.y - 40, 20, 40 };
+                shooters[i].rect = (Rectangle){ p.x - sWidth, p.y - sHeight, sWidth, sHeight };
                 shooters[i].direction = 1;
             } else {
-                shooters[i].rect = (Rectangle){ p.x + p.width, p.y - 40, 20, 40 };
+                shooters[i].rect = (Rectangle){ p.x + p.width, p.y - sHeight, sWidth, sHeight };
                 shooters[i].direction = -1;
             }
         }
