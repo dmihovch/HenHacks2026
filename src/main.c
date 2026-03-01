@@ -9,7 +9,6 @@
 #define PLATFORMER KEY_THREE 
 int main(int argc, char** argv)
 {
-
 	SetRandomSeed((int)GetTime());
 
 	const int width = 1280;
