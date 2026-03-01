@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 
+
 void drawCrosshair(Crosshair xh)
 {
 	DrawRectangle(xh.pos.x - (xh.length / 2.0f), xh.pos.y - (xh.thickness / 2.0f), xh.length, xh.thickness, xh.col);
@@ -111,17 +112,16 @@ void enterQuickdraw()
 	float target_rad = 100.;
 
 	Target p1tg = (Target){
-		(Vector2){GetRandomValue(0+target_rad,(WIDTH/2.)-target_rad),GetRandomValue(0+target_rad,HEIGHT-target_rad)},
+		(Vector2){(float)GetRandomValue(0+target_rad,(WIDTH/2.)-target_rad),(float)GetRandomValue(0+target_rad,HEIGHT-target_rad)},
 		target_rad,
 		RED,
 	};
 
 	Target p2tg = (Target){
-		(Vector2){GetRandomValue((WIDTH/2.)+target_rad,(WIDTH)-target_rad),GetRandomValue(0+target_rad,HEIGHT-target_rad)},
+		(Vector2){(float)GetRandomValue((WIDTH/2.)+target_rad,(WIDTH)-target_rad),(float)GetRandomValue(0+target_rad,HEIGHT-target_rad)},
 		target_rad,
 		BLUE,
 	};
-
 
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
 	{
@@ -144,12 +144,9 @@ void enterQuickdraw()
 
 		//need to penalize for a miss
 
-
 		BeginDrawing();
 		DrawFPS(0,0);
 		ClearBackground(BLACK);
-		
-		
 
 		if(p1_ontarget)
 		{
