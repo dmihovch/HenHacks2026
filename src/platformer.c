@@ -148,6 +148,7 @@ void SpawnJumpParticles(Particle particles[], Vector2 pos)
 void enterPlatformer(void)
 {
     srand(time(NULL));
+    Texture2D background = LoadTexture("assets/mine.png"); //background
 
     Platform platforms[PLATFORM_COUNT];
     Shooter shooters[PLATFORM_COUNT];
@@ -383,7 +384,8 @@ void enterPlatformer(void)
 
         // --- DRAWING ---
         BeginDrawing();
-        ClearBackground(DARKBLUE);
+        ClearBackground(BLACK);
+        DrawTexture(background, 0, 0, WHITE);
 
         BeginMode2D(camera);
         for (int i = 0; i < PLATFORM_COUNT; i++)
@@ -425,4 +427,5 @@ void enterPlatformer(void)
         winTextTimer += 0.05f;
         EndDrawing();
     }
+    UnloadTexture(background);
 }
