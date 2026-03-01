@@ -14,11 +14,15 @@ int main(int argc, char** argv)
 	const int width = 1280;
 	const int height = 960;
 
+	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
+
 	InitWindow(width,height,"Hackathon 2026");
 	if(!IsWindowReady())
 	{
 		return 1;
 	}
+	ToggleBorderlessWindowed();
+
 
 	// --- LOAD BACKGROUND HERE ---
     // If you run from the project root (what VS Code usually does):
