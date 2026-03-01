@@ -1,2 +1,2 @@
-#define WIDTH 1280
-#define HEIGHT 960
+#define WIDTH 1920
+#define HEIGHT 1080

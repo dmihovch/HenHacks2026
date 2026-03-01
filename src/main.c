@@ -46,12 +46,15 @@ int main(int argc, char** argv)
 
 	// Hitboxes
 	const hitBoxes = false;
+	SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_UNDECORATED);
 
 	InitWindow(width,height,"Hackathon 2026");
 	if(!IsWindowReady())
 	{
 		return 1;
 	}
+	ToggleBorderlessWindowed();
+
 
 	// --- LOAD BACKGROUND HERE ---
     // If you run from the project root (what VS Code usually does):
@@ -92,7 +95,6 @@ int main(int argc, char** argv)
 
 
 	SetTargetFPS(60);
-	int currentScene = 0;
 	while(!WindowShouldClose() && GetKeyPressed() != KEY_Q)
 	{
 
@@ -174,7 +176,6 @@ int main(int argc, char** argv)
 			break;
 		}
 
-		currentScene = GetKeyPressed();
 
 		if(IsKeyPressed(QUICK_DRAW))
 		{
@@ -306,7 +307,8 @@ int main(int argc, char** argv)
 		EndDrawing();
 
 	}
-
+  
+	UnloadTexture(background);
 	CloseWindow();
 	return 0;
 }
