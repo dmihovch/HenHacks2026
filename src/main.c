@@ -20,6 +20,17 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	// --- LOAD BACKGROUND HERE ---
+    // If you run from the project root (what VS Code usually does):
+    Texture2D background = LoadTexture("assets/town.png");
+
+    Rectangle building1 = { (float)width * 0.12f, (float)height * 0.07f, (float)width * 0.32f, (float)height * 0.32f};
+	Rectangle building2 = { (float)width * 0.55f, (float)height * 0.08f, (float)width * 0.45f, (float)height * 0.35f};
+	Rectangle building3 = { (float)width * 0.18f, (float)height * 0.58f, (float)width * 0.27f, (float)height * 0.32f};
+	Rectangle building4 = { (float)width * 0.55f, (float)height * 0.58f, (float)width * 0.27f, (float)height * 0.32f};
+
+
+
 	Vector2 ballPosition = { (float)width/2, (float)height/2 };
 	Vector2 ballVelocity = { 0, 0 };
 
@@ -35,49 +46,49 @@ int main(int argc, char** argv)
 
 		float dt = GetFrameTime();
 
-// Accelerate on X axis
-if (IsKeyDown(KEY_RIGHT)) {
-    ballVelocity.x += ACCEL * dt;
-} else if (IsKeyDown(KEY_LEFT)) {
-    ballVelocity.x -= ACCEL * dt;
-} else {
-    // Apply friction on X
-    if (ballVelocity.x > 0) {
-        ballVelocity.x -= FRICTION * dt;
-        if (ballVelocity.x < 0) ballVelocity.x = 0;
-    } else if (ballVelocity.x < 0) {
-        ballVelocity.x += FRICTION * dt;
-        if (ballVelocity.x > 0) ballVelocity.x = 0;
-    }
-}
+		// Accelerate on X axis
+		if (IsKeyDown(KEY_RIGHT)) {
+			ballVelocity.x += ACCEL * dt;
+		} else if (IsKeyDown(KEY_LEFT)) {
+			ballVelocity.x -= ACCEL * dt;
+		} else {
+			// Apply friction on X
+			if (ballVelocity.x > 0) {
+				ballVelocity.x -= FRICTION * dt;
+				if (ballVelocity.x < 0) ballVelocity.x = 0;
+			} else if (ballVelocity.x < 0) {
+				ballVelocity.x += FRICTION * dt;
+				if (ballVelocity.x > 0) ballVelocity.x = 0;
+			}
+		}
 
-// Accelerate on Y axis
-if (IsKeyDown(KEY_DOWN)) {
-    ballVelocity.y += ACCEL * dt;
-} else if (IsKeyDown(KEY_UP)) {
-    ballVelocity.y -= ACCEL * dt;
-} else {
-    // Apply friction on Y
-    if (ballVelocity.y > 0) {
-        ballVelocity.y -= FRICTION * dt;
-        if (ballVelocity.y < 0) ballVelocity.y = 0;
-    } else if (ballVelocity.y < 0) {
-        ballVelocity.y += FRICTION * dt;
-        if (ballVelocity.y > 0) ballVelocity.y = 0;
-    }
-}
+		// Accelerate on Y axis
+		if (IsKeyDown(KEY_DOWN)) {
+			ballVelocity.y += ACCEL * dt;
+		} else if (IsKeyDown(KEY_UP)) {
+			ballVelocity.y -= ACCEL * dt;
+		} else {
+			// Apply friction on Y
+			if (ballVelocity.y > 0) {
+				ballVelocity.y -= FRICTION * dt;
+				if (ballVelocity.y < 0) ballVelocity.y = 0;
+			} else if (ballVelocity.y < 0) {
+				ballVelocity.y += FRICTION * dt;
+				if (ballVelocity.y > 0) ballVelocity.y = 0;
+			}
+		}
 
-// Clamp diagonal speed so diagonals aren't faster
-float speed = sqrtf(ballVelocity.x * ballVelocity.x + ballVelocity.y * ballVelocity.y);
-if (speed > MAX_SPEED) {
-    float scale = MAX_SPEED / speed;
-    ballVelocity.x *= scale;
-    ballVelocity.y *= scale;
-}
+		// Clamp diagonal speed so diagonals aren't faster
+		float speed = sqrtf(ballVelocity.x * ballVelocity.x + ballVelocity.y * ballVelocity.y);
+		if (speed > MAX_SPEED) {
+			float scale = MAX_SPEED / speed;
+			ballVelocity.x *= scale;
+			ballVelocity.y *= scale;
+		}
 
-// Apply velocity to position
-ballPosition.x += ballVelocity.x * dt;
-ballPosition.y += ballVelocity.y * dt;
+		// Apply velocity to position
+		ballPosition.x += ballVelocity.x * dt;
+		ballPosition.y += ballVelocity.y * dt;
 
 		currentScene = GetKeyPressed();
 
@@ -95,6 +106,21 @@ ballPosition.y += ballVelocity.y * dt;
 		}
 
 		BeginDrawing();
+
+		// --- DRAW BACKGROUND FIRST ---
+        DrawTexturePro(
+            background,
+            (Rectangle){0, 0, (float)background.width, (float)background.height},   // source
+            (Rectangle){0, 0, (float)width, (float)height},                         // destination (fills window)
+            (Vector2){0, 0},
+            0.0f,
+            WHITE
+        );
+
+		DrawRectangleLinesEx(building1, 3, RED);
+		DrawRectangleLinesEx(building2, 3, RED);
+		DrawRectangleLinesEx(building3, 3, RED);
+		DrawRectangleLinesEx(building4, 3, RED);
 
 		ClearBackground(BLACK);
 		DrawText("Town Lobby",WIDTH/2,HEIGHT/2,20,RED);
